@@ -1,5 +1,14 @@
 abstract/abs-08.jpg
+abstract/abs-09.jpg
+cars/car-01.jpg
+cars/car-02.jpg
+cars/car-09.jpg
+industrial/ind-02.jpg
+industrial/ind-10.jpg
 industrial/ind-15.jpg
-sunset/sun-17.jpg
-cars/car-08.jpg
+nature/nat-41.jpg
+space/spa-02.jpg
 sunset/sun-10.png
+sunset/sun-17.jpg
+space/spa-01.jpg
+cars/car-08.jpg
