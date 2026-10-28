@@ -1,58 +1,29 @@
-
 #!/bin/bash
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 source "$SCRIPT_DIR/fullinstall-packages.sh"
-
-RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
-CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
-
-info()    { echo -e "${CYAN}${BOLD}[•]${RESET} $*"; }
-success() { echo -e "${GREEN}${BOLD}[✓]${RESET} $*"; }
-warn()    { echo -e "${YELLOW}${BOLD}[!]${RESET} $*"; }
-error()   { echo -e "${RED}${BOLD}[✗]${RESET} $*" >&2; }
-section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
 
 DOTFILES_DIR="$HOME/Dotfiles"
 HYPRLAND_STYLE_DIR=""
+INSTALLING=false
 
 # backups
 
+# folders get copied into <name>_backup_<time>, .bashrc lands inside its own one
 backup_config() {
-    local timestamp="$(date +%Y%m%d_%H%M%S)" item src dest backed_up=false
+    local stamp="$(date +%Y%m%d_%H%M%S)" name src dest
 
-    for item in \
-        "$HOME/.config:$HOME/.config_backup_$timestamp" \
-        "$HOME/.icons:$HOME/.icons_backup_$timestamp" \
-        "$HOME/wallpapers:$HOME/wallpapers_backup_$timestamp"
-    do
-        src="${item%%:*}"
-        dest="${item#*:}"
-
-        if [[ -e "$src" ]]; then
-            info "Backing up $src → $dest"
-            mkdir -p "$dest"
-            cp -a "$src/." "$dest/"
-            success "Backed up $(basename "$src")"
-            backed_up=true
-        else
-            warn "$(basename "$src") not found, skipping."
-        fi
+    for name in .config .icons wallpapers .bashrc; do
+        src="$HOME/$name" dest="$HOME/${name}_backup_$stamp"
+        [[ -e "$src" ]] || { warn "$name not found, skipping."; continue; }
+        info "Backing up $src → $dest"
+        mkdir -p "$dest"
+        if [[ -d "$src" ]]; then cp -a "$src/." "$dest/"; else cp -a "$src" "$dest/"; fi
     done
-
-    $backed_up && success "Backups complete." || warn "Nothing to back up."
-}
-
-backup_bashrc() {
-    local dest="$HOME/.bashrc_backup_$(date +%Y%m%d_%H%M%S)"
-
-    [[ -f "$HOME/.bashrc" ]] || { warn "~/.bashrc not found."; return; }
-
-    mkdir -p "$dest"
-    cp -a "$HOME/.bashrc" "$dest/.bashrc"
-    success "Backed up .bashrc to $dest"
+    success "Backups done."
 }
 
 # hyprland profile
@@ -60,26 +31,12 @@ backup_bashrc() {
 select_hyprland_style() {
     section "Hyprland Style"
 
-    local profiles=() entry i=1 choice
-    while IFS= read -r entry; do
-        profiles+=("$entry")
-    done < <("$DOTFILES_DIR/.config/hypr/utilities/hypr-profile.sh" list)
+    local profiles
+    mapfile -t profiles < <("$DOTFILES_DIR/.config/hypr/utilities/hypr-profile.sh" list)
+    ((${#profiles[@]})) || { error "No Hyprland profiles found."; return 1; }
 
-    [[ ${#profiles[@]} -gt 0 ]] || { error "No Hyprland profiles found."; return 1; }
-
-    for entry in "${profiles[@]}"; do
-        echo "$i. ${entry/\// / }"
-        ((i += 1))
-    done
-
-    read -rp "Choose a style [1]: " choice
-    choice="${choice:-1}"
-
-    [[ "$choice" =~ ^[0-9]+$ ]] &&
-        ((choice >= 1 && choice <= ${#profiles[@]})) ||
-        { error "Invalid style."; return 1; }
-
-    HYPRLAND_STYLE_DIR="${profiles[$((choice - 1))]}"
+    pick "Choose a style" "${profiles[@]/\// / }"
+    HYPRLAND_STYLE_DIR="${profiles[PICK]}"
     success "Selected ${HYPRLAND_STYLE_DIR/\// / }"
 }
 
@@ -88,9 +45,7 @@ select_hyprland_style() {
 link_entry() {
     local target="$1" link="$2" backup="$3"
 
-    if [[ -L "$link" && "$(readlink -f "$link")" == "$(readlink -f "$target")" ]]; then
-        return
-    fi
+    [[ -L "$link" && "$(readlink -f "$link")" == "$(readlink -f "$target")" ]] && return
     if [[ -e "$link" || -L "$link" ]]; then
         mkdir -p "$backup"
         mv "$link" "$backup/$(basename "$link")"
@@ -104,7 +59,7 @@ link_entry() {
 apply_dotfiles() {
     section "Linking Dotfiles"
 
-    local src="$DOTFILES_DIR/.config" entry name
+    local src="$DOTFILES_DIR/.config" entry
     local backup="$HOME/.dotfiles_replaced_$(date +%Y%m%d_%H%M%S)"
 
     shopt -s nullglob dotglob
@@ -123,11 +78,11 @@ apply_dotfiles() {
     git -C "$DOTFILES_DIR" config core.hooksPath .githooks
     link_entry "$HOME/.config/hypr/utilities/pypr.py" "$HOME/.local/bin/pypr" "$backup/.local/bin"
 
-    if [[ -n "$HYPRLAND_STYLE_DIR" ]]; then
+    [[ -z "$HYPRLAND_STYLE_DIR" ]] ||
         "$src/hypr/utilities/hypr-profile.sh" apply "${HYPRLAND_STYLE_DIR%%/*}" "${HYPRLAND_STYLE_DIR#*/}" --offline
-    fi
 
     success "Dotfiles linked."
+    apply_colors
     nohup bash -c 'sleep 1; hyprctl reload' >/dev/null 2>&1 &
 
     # restart the shells so the new utilities load now
@@ -137,21 +92,29 @@ apply_dotfiles() {
     fi
 }
 
-run_wallpaper_selector() {
-    local script="$HOME/.config/hypr/utilities/shells.sh" choice
+# waybar and the bar won't even open without a wal palette, so don't wait on a wallpaper pick
+# a fresh install always starts on the dotfiles wallpaper, apply.sh only fills in colors if there are none
+apply_colors() {
+    $INSTALLING || [[ ! -f "$HOME/.cache/wal/colors.json" ]] || return 0
+    section "Applying Colors"
 
-    # dotfiles only ship the favorites, the full library is its own repo
-    read -rp "Pull the full wallpaper library? (Y/n): " choice
-    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        "$HOME/.config/hypr/utilities/wallpapers.sh" install || warn "Couldn't pull wallpapers, sticking with the defaults."
-    fi
+    local wallpaper="$HOME/wallpapers/pywallpaper.jpg"
+    cp "$DOTFILES_DIR/wallpapers/pywallpaper.jpg" "$wallpaper"
+    mkdir -p "$HOME/.cache/wallpaper-picker"
+    printf '%s\n' "$wallpaper" > "$HOME/.cache/wallpaper-picker/current"
+    awww img "$wallpaper" --transition-type none >/dev/null 2>&1 || true
 
-    if [[ -x "$script" ]]; then
-        section "Selecting Wallpaper"
-        "$script" wallpaper open
+    if "$HOME/.config/hypr/utilities/color-apply.sh" "" "$wallpaper"; then
+        success "Colors generated from the dotfiles wallpaper."
     else
-        warn "Wallpaper selector not found."
+        warn "Couldn't generate colors; pick a color theme in settings later."
     fi
+}
+
+# dotfiles only ship the favorites, the full library is its own repo
+pull_wallpapers() {
+    ask "Pull the full wallpaper library?" || return 0
+    "$HOME/.config/hypr/utilities/wallpapers.sh" install || warn "Couldn't pull wallpapers, sticking with the defaults."
 }
 
 # system setup
@@ -159,15 +122,12 @@ run_wallpaper_selector() {
 setup_mirrors() {
     section "Updating Pacman Mirrorlist"
     yay -S --needed reflector rsync
-    sudo reflector --country US --latest 10 --sort rate \
-        --save /etc/pacman.d/mirrorlist
+    sudo reflector --country US --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
     success "Mirrorlist updated."
 }
 
 autologin_install() {
-    local user
-    user="$(id -un)"
-
+    local user="$(id -un)"
     yay -S --needed greetd greetd-tuigreet
 
     sudo tee /etc/greetd/config.toml >/dev/null <<EOF
@@ -200,16 +160,7 @@ autologin_uninstall() {
     success "Autologin removed; the default tty1 login will be used on next boot."
 }
 
-autologin() {
-    local choice
-    read -rp "Autologin: (1) Install/Update (2) Uninstall [1]: " choice
 
-    case "${choice:-1}" in
-        1) autologin_install ;;
-        2) autologin_uninstall ;;
-        *) error "Invalid option."; return 1 ;;
-    esac
-}
 # hyprpm plugins need rebuilding after hyprland updates
 update_plugins() {
     command -v hyprpm >/dev/null || return 0
@@ -235,15 +186,7 @@ glass_uninstall() {
     hyprpm remove https://github.com/hyprnux/hyprglass
     success "hyprglass plugin removed"
 }
-glass() {
-    local choice
-    read -rp "hyprglass: (1) Install/Update (2) Uninstall [1]: " choice
-    case "${choice:-1}" in
-        1) glass_install ;;
-        2) glass_uninstall ;;
-        *) error "Invalid option."; return 1 ;;
-    esac
-}
+
 setup_bluetooth() {
     section "Bluetooth"
     yay -S --needed blueman bluez
@@ -255,98 +198,48 @@ setup_pipewire() {
     section "PipeWire & Audio"
     yay -S --needed pipewire pipewire-pulse pipewire-alsa pipewire-jack \
         pavucontrol pulsemixer gnome-network-displays gst-plugins-bad
-    systemctl --user enable --now pipewire.service
-    systemctl --user enable --now pipewire-pulse.service
+    systemctl --user enable --now pipewire.service pipewire-pulse.service
     success "PipeWire configured."
-}
-
-optional_packages() {
-    local choice
-    read -rp "Install optional packages? (Y/n): " choice
-    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        yay -S --needed "${OPTIONAL_PACKAGES[@]}" ||
-            warn "Some optional packages failed."
-    fi
-}
-
-optional_reboot() {
-    local choice
-    read -rp "Reboot now? (Y/n): " choice
-    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        info "Rebooting..."
-        sync
-        sudo systemctl reboot || sudo reboot || { error "Reboot failed; reboot manually."; return 1; }
-    fi
-    return 0
-}
-
-finish() {
-    success "Installation complete!"
-    notify-send "Dotfiles Installed" \
-        "Open Terminal with MOD+Q\nHello $USER, thanks for using my dotfiles!\n-EF" \
-        2>/dev/null || true
 }
 
 # installation modes
 
-auto_install() {
-    section "Automatic Installation"
-    
-    local choice 
-    read -rp "Update mirrorlist? (Y/n): " choice
-    [[ "${choice:-y}" =~ ^[Yy]$ ]] && setup_mirrors
+run_install() {
+    local manual="$1" pkg
+    section "$($manual && echo Manual || echo Automatic) Installation"
+    INSTALLING=true
 
-    info "Installing core packages..."
-    yay -S --needed "${CORE_PACKAGES[@]}"
-    sudo systemctl enable --now avahi-daemon
-
-    setup_bluetooth
-    setup_pipewire
-    apply_dotfiles
-    run_wallpaper_selector
-
-    read -rp "Set up autologin? (Y/n): " choice
-    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        autologin || warn "Autologin setup failed."
+    ask "Update mirrorlist?" && setup_mirrors
+    if $manual; then
+        section "Package Selection"
+        for pkg in "${CORE_PACKAGES[@]}"; do
+            ask "Install $pkg?" && { yay -S --needed "$pkg" || warn "Failed to install $pkg"; }
+        done
+        ask "Install Bluetooth support?" && setup_bluetooth
+        ask "Configure PipeWire?" && setup_pipewire
+    else
+        info "Installing core packages..."
+        yay -S --needed "${CORE_PACKAGES[@]}"
+        sudo systemctl enable --now avahi-daemon
+        setup_bluetooth
+        setup_pipewire
     fi
-    glass
-    optional_packages
-    finish
-    optional_reboot
-}
-
-manual_install() {
-    section "Manual Installation"
-
-    local choice pkg
-    read -rp "Update mirrorlist? (Y/n): " choice
-    [[ "${choice:-y}" =~ ^[Yy]$ ]] && setup_mirrors
-
-    section "Package Selection"
-    for pkg in "${CORE_PACKAGES[@]}"; do
-        read -rp "Install $pkg? (Y/n): " choice
-        if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-            yay -S --needed "$pkg" || warn "Failed to install $pkg"
-        fi
-    done
-
-    read -rp "Install Bluetooth support? (Y/n): " choice
-    [[ "${choice:-y}" =~ ^[Yy]$ ]] && setup_bluetooth
-
-    read -rp "Configure PipeWire? (Y/n): " choice
-    [[ "${choice:-y}" =~ ^[Yy]$ ]] && setup_pipewire
 
     apply_dotfiles
-    run_wallpaper_selector
+    pull_wallpapers
+    ask "Set up autologin?" && { install_or_remove Autologin autologin_install autologin_uninstall || warn "Autologin setup failed."; }
+    install_or_remove hyprglass glass_install glass_uninstall
+    ask "Install optional packages?" && { yay -S --needed "${OPTIONAL_PACKAGES[@]}" || warn "Some optional packages failed."; }
 
-    read -rp "Set up autologin? (Y/n): " choice
-    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        autologin || warn "Autologin setup failed."
+    success "Installation complete!"
+    notify-send "Dotfiles Installed" \
+        "Open Terminal with MOD+Q\nHello $USER, thanks for using my dotfiles!\n-EF" 2>/dev/null || true
+
+    if ask "Reboot now?"; then
+        info "Rebooting..."
+        sync
+        sudo systemctl reboot || sudo reboot || { error "Reboot failed; reboot manually."; return 1; }
     fi
-    glass
-    optional_packages
-    finish
-    optional_reboot
 }
 
 # entry point
@@ -370,21 +263,13 @@ EOF
     section "Welcome"
     select_hyprland_style
 
-    local install_choice backup_choice
-    read -rp "Installation mode: (A)utomatic or (M)anual? [A]: " install_choice
-    install_choice="${install_choice:-a}"
+    local mode
+    read -rp "Installation mode: (A)utomatic or (M)anual? [A]: " mode
+    mode="${mode:-a}"
+    [[ "${mode,,}" == [am] ]] || { error "Unknown option '$mode'."; return 1; }
 
-    read -rp "Back up current dotfiles? (Y/n): " backup_choice
-    if [[ "${backup_choice:-y}" =~ ^[Yy]$ ]]; then
-        backup_config
-        backup_bashrc
-    fi
-
-    case "${install_choice,,}" in
-        a) auto_install ;;
-        m) manual_install ;;
-        *) error "Unknown option '$install_choice'."; return 1 ;;
-    esac
+    ask "Back up current dotfiles?" && backup_config
+    run_install "$([[ ${mode,,} == m ]] && echo true || echo false)"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

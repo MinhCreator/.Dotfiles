@@ -3,16 +3,7 @@
 
 set -euo pipefail
 
-RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
-CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
-
-info()    { echo -e "${CYAN}${BOLD}[•]${RESET} $*"; }
-success() { echo -e "${GREEN}${BOLD}[✓]${RESET} $*"; }
-warn()    { echo -e "${YELLOW}${BOLD}[!]${RESET} $*"; }
-error()   { echo -e "${RED}${BOLD}[✗]${RESET} $*" >&2; }
-section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
-
-REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/common.sh"
 DEST="$HOME/.config/waybar"
 STYLE_DIR=""
 
@@ -23,46 +14,22 @@ PACKAGES=(
 # AUR only, optional
 AUR_PACKAGES=(python-pywal16)
 
-# packages
-
-install_packages() {
-    local helper=""
-    command -v yay >/dev/null && helper=yay
-    [[ -z "$helper" ]] && command -v paru >/dev/null && helper=paru
-
-    if [[ -n "$helper" ]]; then
-        "$helper" -S --needed "${PACKAGES[@]}" "${AUR_PACKAGES[@]}"
-    elif command -v pacman >/dev/null; then
-        warn "No AUR helper (yay/paru) found; skipping ${AUR_PACKAGES[*]}."
-        sudo pacman -S --needed "${PACKAGES[@]}"
-    else
-        warn "Not an Arch system; install these yourself: ${PACKAGES[*]} pywal16"
-    fi
-}
-
 # style
 
 select_style() {
     section "Waybar Style"
 
-    local styles=() d i=1 choice
+    local styles=() labels=() d
     for d in "$REPO"/.config/hypr/*/waybar/*/; do
-        [[ -f "$d/config" && -f "$d/style.css" ]] && styles+=("${d%/}")
+        d="${d%/}"
+        [[ -f "$d/config" && -f "$d/style.css" ]] || continue
+        styles+=("$d") labels+=("$(basename "${d%/waybar/*}") / ${d##*/}")
     done
-    [[ ${#styles[@]} -gt 0 ]] || { error "No waybar styles found under $REPO/.config/hypr/."; exit 1; }
+    ((${#styles[@]})) || { error "No waybar styles found under $REPO/.config/hypr/."; exit 1; }
 
-    for d in "${styles[@]}"; do
-        echo "$i. $(basename "$(dirname "$(dirname "$d")")") / $(basename "$d")"
-        ((i += 1))
-    done
     echo "   (previews: $REPO/.config/hypr/<style>/waybar/<name>/preview.png)"
-
-    read -rp "Choose a style [1]: " choice
-    choice="${choice:-1}"
-    [[ "$choice" =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#styles[@]})) ||
-        { error "Invalid style."; exit 1; }
-
-    STYLE_DIR="${styles[$((choice - 1))]}"
+    pick "Choose a style" "${labels[@]}" || exit 1
+    STYLE_DIR="${styles[PICK]}"
     success "Selected $(basename "$STYLE_DIR")"
 }
 
@@ -86,28 +53,16 @@ install_config() {
     cp "$STYLE_DIR/style.css" "$DEST/style.css"
     cp -a "$REPO/.config/waybar/scripts/." "$DEST/scripts/"
     chmod +x "$DEST"/scripts/*.sh
-    echo "$(basename "$STYLE_DIR")" > "$DEST/.standalone"
-
-    if [[ ! -x "$HOME/.config/hypr/utilities/shells.sh" ]]; then
-        sed -i 's|"custom/notification",\s*||' "$DEST/config"
-    fi
+    basename "$STYLE_DIR" > "$DEST/.standalone"
+    [[ -x "$HOME/.config/hypr/utilities/shells.sh" ]] || sed -i 's|"custom/notification",\s*||' "$DEST/config"
 
     success "Installed to $DEST"
 }
 
 # style.css needs colors-waybar.css or waybar won't style anything
 ensure_palette() {
-    local css="$HOME/.cache/wal/colors-waybar.css" wallpaper="$HOME/wallpapers/pywallpaper.jpg"
-
-    [[ -f "$css" ]] && { success "Using your existing pywal palette."; return; }
-
-    if command -v wal >/dev/null && [[ -f "$wallpaper" ]]; then
-        info "Generating a pywal palette from the default wallpaper."
-        # -n keeps the wallpaper, -s -t skips terminals
-        wal -q -n -s -t -i "$wallpaper" || true
-    fi
-    [[ -f "$css" ]] && { success "Pywal palette generated."; return; }
-
+    local css="$HOME/.cache/wal/colors-waybar.css"
+    ensure_wal "$css" && return
     mkdir -p "$(dirname "$css")"
     cat > "$css" <<'EOF'
 @define-color foreground #c7c6c2;
@@ -136,24 +91,18 @@ EOF
 enable_bluetooth() {
     command -v systemctl >/dev/null || return 0
     systemctl is-enabled --quiet bluetooth 2>/dev/null && return 0
-    local choice
-    read -rp "Enable the Bluetooth service? (Y/n): " choice
-    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        sudo systemctl enable --now bluetooth || warn "Could not enable bluetooth; run 'sudo systemctl enable --now bluetooth'."
-    fi
-    return 0
+    ask "Enable the Bluetooth service?" || return 0
+    sudo systemctl enable --now bluetooth || warn "Could not enable bluetooth; run 'sudo systemctl enable --now bluetooth'."
 }
 
 restart_waybar() {
     [[ -n "${WAYLAND_DISPLAY:-}" ]] || return 0
-    local choice
     if pgrep -x waybar >/dev/null; then
         pkill -x waybar || true
         setsid -f waybar >/dev/null 2>&1 </dev/null
         success "Restarted waybar with the new style."
-    else
-        read -rp "Start waybar now? (Y/n): " choice
-        [[ "${choice:-y}" =~ ^[Yy]$ ]] && setsid -f waybar >/dev/null 2>&1 </dev/null && success "Waybar started."
+    elif ask "Start waybar now?"; then
+        setsid -f waybar >/dev/null 2>&1 </dev/null && success "Waybar started."
     fi
     return 0
 }
@@ -179,10 +128,8 @@ Config:   $DEST/config and $DEST/style.css
 Colors:   ~/.cache/wal/colors-waybar.css (run 'wal -i <image>' to recolor from a wallpaper)
 Restyle:  re-run this installer and pick another style.
 EOF
-    if [[ -e "$HOME/.config/hypr/utilities/bar.sh" ]]; then
-        echo
-        warn "The full dotfiles install is present: it already starts the bar (bar.sh) and binds ALT+A, so skip the lines above."
-    fi
+    [[ ! -e "$HOME/.config/hypr/utilities/bar.sh" ]] ||
+        { echo; warn "The full dotfiles install is present: it already starts the bar (bar.sh) and binds ALT+A, so skip the lines above."; }
 }
 
 main() {

@@ -3,16 +3,7 @@
 
 set -euo pipefail
 
-RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
-CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
-
-info()    { echo -e "${CYAN}${BOLD}[•]${RESET} $*"; }
-success() { echo -e "${GREEN}${BOLD}[✓]${RESET} $*"; }
-warn()    { echo -e "${YELLOW}${BOLD}[!]${RESET} $*"; }
-error()   { echo -e "${RED}${BOLD}[✗]${RESET} $*" >&2; }
-section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
-
-REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/common.sh"
 NAME="dotfiles-bar"
 DEST="$HOME/.config/quickshell/$NAME"
 UTIL="$REPO/.config/hypr/Modern/utilities"
@@ -26,47 +17,22 @@ PACKAGES=(
 )
 AUR_PACKAGES=(python-pywal16 gnome-network-displays)
 
-
-install_packages() {
-    local helper=""
-    command -v yay >/dev/null && helper=yay
-    [[ -z "$helper" ]] && command -v paru >/dev/null && helper=paru
-
-    if [[ -n "$helper" ]]; then
-        "$helper" -S --needed "${PACKAGES[@]}" "${AUR_PACKAGES[@]}"
-    elif command -v pacman >/dev/null; then
-        warn "No AUR helper (yay/paru) found; skipping ${AUR_PACKAGES[*]}."
-        sudo pacman -S --needed "${PACKAGES[@]}"
-    else
-        warn "Not an Arch system; install these yourself: ${PACKAGES[*]} pywal16"
-    fi
-}
-
-
 select_style() {
     section "Quickshell Bar Style"
 
-    local styles=() f i=1 choice
+    local styles=() labels=() f d
     for f in "$REPO"/.config/hypr/*/quickshellbar/*/config.json; do
-        [[ -f "$f" ]] && styles+=("$f")
+        [[ -f "$f" ]] || continue
+        d="${f%/config.json}"
+        styles+=("$f") labels+=("$(basename "${d%/quickshellbar/*}") / ${d##*/}")
     done
-    [[ ${#styles[@]} -gt 0 ]] || { error "No quickshell bar styles found under $REPO/.config/hypr/."; exit 1; }
+    ((${#styles[@]})) || { error "No quickshell bar styles found under $REPO/.config/hypr/."; exit 1; }
 
-    for f in "${styles[@]}"; do
-        echo "$i. $(basename "$(dirname "$(dirname "$(dirname "$f")")")") / $(basename "$(dirname "$f")")"
-        ((i += 1))
-    done
     echo "   (previews: $REPO/.config/hypr/<style>/quickshellbar/<name>/preview.svg)"
-
-    read -rp "Choose a style [1]: " choice
-    choice="${choice:-1}"
-    [[ "$choice" =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#styles[@]})) ||
-        { error "Invalid style."; exit 1; }
-
-    STYLE_FILE="${styles[$((choice - 1))]}"
+    pick "Choose a style" "${labels[@]}" || exit 1
+    STYLE_FILE="${styles[PICK]}"
     success "Selected $(basename "$(dirname "$STYLE_FILE")")"
 }
-
 
 install_config() {
     section "Installing the Quickshell Bar"
@@ -95,32 +61,19 @@ install_config() {
 }
 
 ensure_palette() {
-    local json="$HOME/.cache/wal/colors.json" wallpaper="$HOME/wallpapers/pywallpaper.jpg"
-
-    [[ -f "$json" ]] && { success "Using your existing pywal palette."; return; }
-
-    if command -v wal >/dev/null && [[ -f "$wallpaper" ]]; then
-        info "Generating a pywal palette from the default wallpaper."
-        wal -q -n -s -t -i "$wallpaper" || true
-    fi
-    if [[ -f "$json" ]]; then
-        success "Pywal palette generated."
-    else
+    ensure_wal "$HOME/.cache/wal/colors.json" ||
         warn "No pywal palette; the bar uses its built-in colors (run 'wal -i <image>' later for wallpaper colors)."
-    fi
 }
 
 enable_services() {
     command -v systemctl >/dev/null || return 0
-    local unit choice
+    local unit
 
     # avahi is how the cast button finds tvs
     for unit in NetworkManager bluetooth avahi-daemon; do
         systemctl is-enabled --quiet "$unit" 2>/dev/null && continue
-        read -rp "Enable the $unit service (used by the bar)? (Y/n): " choice
-        if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-            sudo systemctl enable --now "$unit" || warn "Could not enable $unit; run 'sudo systemctl enable --now $unit'."
-        fi
+        ask "Enable the $unit service (used by the bar)?" || continue
+        sudo systemctl enable --now "$unit" || warn "Could not enable $unit; run 'sudo systemctl enable --now $unit'."
     done
     systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service >/dev/null 2>&1 ||
         warn "Could not start PipeWire for this user; the audio page needs it."
@@ -129,8 +82,6 @@ enable_services() {
 
 start_bar() {
     [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] || return 0
-    local choice
-
     if qs list -c "$NAME" 2>/dev/null | grep -q '^Instance'; then
         qs kill -c "$NAME" >/dev/null 2>&1 || true
         sleep 0.3
@@ -139,11 +90,9 @@ start_bar() {
         return 0
     fi
 
-    read -rp "Start the bar now? (Y/n): " choice
-    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        pgrep -x waybar >/dev/null && warn "waybar is running too; stop it (pkill waybar) if you want only this bar."
-        qs -c "$NAME" --daemonize >/dev/null 2>&1 </dev/null && success "Bar started."
-    fi
+    ask "Start the bar now?" || return 0
+    pgrep -x waybar >/dev/null && warn "waybar is running too; stop it (pkill waybar) if you want only this bar."
+    qs -c "$NAME" --daemonize >/dev/null 2>&1 </dev/null && success "Bar started."
     return 0
 }
 
@@ -175,10 +124,8 @@ Restart:  qs kill -c $NAME; qs -c $NAME --daemonize
 Style:    cp $dir/styles/<name>.json $dir/style.json   (applies live)
 Colors:   ~/.cache/wal/colors.json (run 'wal -i <image>' to recolor from a wallpaper)
 EOF
-    if [[ -e "$HOME/.config/hypr/utilities/bar" ]]; then
-        echo
-        warn "The full dotfiles install is present and already has this bar (bar.sh apply quickshell); running both gives two bars."
-    fi
+    [[ ! -e "$HOME/.config/hypr/utilities/bar" ]] ||
+        { echo; warn "The full dotfiles install is present and already has this bar (bar.sh apply quickshell); running both gives two bars."; }
 }
 
 main() {

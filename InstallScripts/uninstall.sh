@@ -8,7 +8,6 @@ source "$SCRIPT_DIR/fullinstall.sh"
 set +e -uo pipefail
 shopt -s nullglob dotglob
 
-REPO="$(readlink -f "$SCRIPT_DIR/..")"
 LEFT="$HOME/.dotfiles_uninstalled_$(date +%Y%m%d_%H%M%S)"
 GLASS=https://github.com/hyprnux/hyprglass
 # stuff your system probably still needs even after the dotfiles are gone
@@ -40,21 +39,15 @@ backup_of() {
 
 choose_mode() {
     section "What do you want back?"
-    local backups=("$HOME"/.dotfiles_replaced_* "$HOME"/.config_backup_* "$HOME"/.bashrc_backup_* "$HOME"/wallpapers_backup_*) choice
+    local backups=("$HOME"/.dotfiles_replaced_* "$HOME"/.config_backup_* "$HOME"/.bashrc_backup_* "$HOME"/wallpapers_backup_*)
     if (( ${#backups[@]} )); then
         info "Found backups:"
         printf '    %s\n' "${backups[@]}"
     else
         warn "No backups found, restoring would just give you defaults anyway."
     fi
-    echo "1. Restore my old configs from the backups (anything without one goes default)"
-    echo "2. Defaults for everything"
-    read -rp "Choose [1]: " choice
-    case "${choice:-1}" in
-        1) MODE=restore ;;
-        2) MODE=defaults ;;
-        *) error "Invalid option."; exit 1 ;;
-    esac
+    pick "Choose" "Restore my old configs from the backups (anything without one goes default)" "Defaults for everything" || exit 1
+    MODE=$( ((PICK)) && echo defaults || echo restore )
 }
 
 choose_packages() {
@@ -84,8 +77,7 @@ choose_packages() {
         # no python, the slow way
         for pkg in "${args[@]}"; do
             [[ "$pkg" == @* ]] && { echo -e "\n${BOLD}${pkg#@}${RESET}"; continue; }
-            read -rp "Uninstall ${pkg%!}? (y/N): " choice
-            [[ "$choice" =~ ^[Yy]$ ]] && PICKED+=("${pkg%!}")
+            ask "Uninstall ${pkg%!}?" n && PICKED+=("${pkg%!}")
         done
     fi
 }
@@ -149,9 +141,22 @@ undo_configs() {
         mkdir -p "$HOME/wallpapers" && cp -a "$b/." "$HOME/wallpapers/" && success "Restored ~/wallpapers"
     fi
 
-    # stuff the dotfiles made that the apps would just remake
+    # everything the dotfiles generate. the gitignored stuff sits in the repo behind the links
+    # (profile links like utilities/wallpaper-picker, cava/config, kitty theme, .color-theme...)
+    # cava makes shaders/themes on its own, only the config is ours
+    local made
+    while IFS= read -r made; do
+        ours "$REPO/$made" && rm "$REPO/$made" || stash "$REPO/$made"
+    done < <(git -C "$REPO" ls-files -oi --exclude-standard .config ':!.config/cava/shaders' ':!.config/cava/themes')
+    for made in .cache/wal .cache/wallpaper-picker .cache/hypr-home .cache/launcher .cache/colorpicker \
+                .cache/capture-thumb.png .local/state/hypr-settings .local/state/music-player \
+                .local/state/overview .local/state/quickshell-lock.json; do
+        stash "$HOME/$made"
+    done
+    success "Cleared out what the dotfiles generated."
+
+    # stuff the apps would just remake
     if [[ $MODE == defaults ]]; then
-        stash "$HOME/.cache/wal"
         stash "$HOME/.local/share/nvim"
         stash "$HOME/.local/state/nvim"
         stash "$HOME/.cache/nvim"
@@ -193,12 +198,11 @@ EOF
 
     section "About to"
     echo "  • $( [[ $MODE == restore ]] && echo "unlink the dotfiles and restore your backups" || echo "unlink the dotfiles and leave everything default" )"
+    echo "  • clear out everything the dotfiles generated (wallpaper-picker, wal colors, cava config...)"
     echo "  • turn off autologin and hyprglass if they're set up"
     echo "  • uninstall ${#PICKED[@]} package(s)${PICKED:+: ${PICKED[*]}}"
     echo "  • move anything that isn't a link to $LEFT"
-    local choice
-    read -rp "Go? (y/N): " choice
-    [[ "$choice" =~ ^[Yy]$ ]] || { info "Cancelled, nothing touched."; exit 0; }
+    ask "Go?" n || { info "Cancelled, nothing touched."; exit 0; }
 
     sudo -v || { error "Need sudo for the system stuff."; exit 1; }
     undo_plugins
@@ -212,8 +216,7 @@ EOF
     info "The mirrorlist reflector wrote is still there, it works so it stays."
     info "This folder ($REPO) is still here too, rm -rf it whenever."
     warn "Hyprland is still running on the old stuff, log out or reboot."
-    read -rp "Reboot now? (y/N): " choice
-    [[ "$choice" =~ ^[Yy]$ ]] && { sync; sudo systemctl reboot; }
+    ask "Reboot now?" n && { sync; sudo systemctl reboot; }
     exit 0
 }
 
