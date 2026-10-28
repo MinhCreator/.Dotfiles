@@ -116,12 +116,13 @@ Item {
     function c(i, s) { return span(i, t(s)) }
     function span(i, h) { return "<font color='" + lc(i) + "'>" + h + "</font>" }
 
-    // shows value until you start typing, otherwise the binding breaks and it stops updating
+    // not a binding cause typing would break it. only pushes value in when it actually differs from what you typed
     component Field: Rectangle {
         property string value
         readonly property alias text: input.text
         signal done()
-        onValueChanged: if (!input.activeFocus) input.text = value
+        signal edited()
+        onValueChanged: if (value !== input.text) input.text = value
         Component.onCompleted: input.text = value
         height: 30
         radius: tp.r
@@ -140,7 +141,9 @@ Item {
             font.pixelSize: 12
             color: Theme.bright
             selectionColor: Theme.alpha(Theme.accent, 0.6)
-            onEditingFinished: parent.done()
+            onTextEdited: parent.edited()
+            // snaps half typed junk back to the real value
+            onEditingFinished: { text = parent.value; parent.done() }
             Keys.onEscapePressed: tp.draft = null
         }
     }
@@ -162,6 +165,7 @@ Item {
             color: tp.bg
             border.width: 1
             border.color: Theme.alpha(Theme.fg, 0.14)
+            Rise { target: term; replay: Store.opened }
 
             Column {
                 id: stack
@@ -213,14 +217,7 @@ Item {
                             readonly property bool on: !!tp.draft && tp.slot === s
                             width: (grid.width - 7 * grid.columnSpacing) / 8
                             spacing: 3
-                            // each one drops in a lil after the last, looks nice idk
-                            property real p: 0
-                            opacity: p
-                            transform: Translate { y: (1 - cell.p) * -6 }
-                            SequentialAnimation on p {
-                                PauseAnimation { duration: Theme.ms(cell.index * 18) }
-                                NumberAnimation { to: 1; duration: Theme.ms(260); easing.type: Easing.OutCubic }
-                            }
+                            Rise { target: cell; index: cell.index }
                             Rectangle {
                                 width: parent.width
                                 height: 16
@@ -262,6 +259,7 @@ Item {
             currentIndex: tp.cur
             highlightMoveDuration: Theme.ms(160)
             highlightResizeDuration: 0
+            Rise { target: list; index: 1; replay: Store.opened }
             // one hover for the whole list. per row hover kept dropping when the mouse sat still
             // and it jumped back to pywal, this fixed it i think
             HoverHandler {
@@ -342,6 +340,7 @@ Item {
             text: "+ customize " + tp.entry.name.toLowerCase()
             font.pixelSize: 12
             onClicked: tp.customize()
+            Rise { target: add; index: 2; replay: Store.opened }
         }
 
         // customize mode
@@ -356,12 +355,15 @@ Item {
                 Field {
                     width: (parent.width - 8) * 0.35
                     value: String(tp.picked)
-                    onDone: if (/^#?[0-9a-f]{6}$/i.test(text.trim())) tp.setSlot("#" + text.trim().replace("#", "").toLowerCase())
+                    onEdited: {
+                        const h = text.trim().replace("#", "").toLowerCase()
+                        if (/^[0-9a-f]{6}$/.test(h)) tp.setSlot("#" + h)
+                    }
                 }
                 Field {
                     width: (parent.width - 8) * 0.65
                     value: tp.draftName
-                    onTextChanged: tp.draftName = text
+                    onEdited: tp.draftName = text
                     onDone: tp.save()
                 }
             }

@@ -12,3 +12,4 @@ singleton Power 1.0 Power.qml
 Settle 1.0 Settle.qml
 Backdrop 1.0 Backdrop.qml
 IconButton 1.0 IconButton.qml
+Rise 1.0 Rise.qml

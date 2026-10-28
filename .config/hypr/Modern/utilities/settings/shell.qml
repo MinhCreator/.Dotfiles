@@ -93,7 +93,7 @@ ShellRoot {
     function begin() {
         leaving = false
         active = true
-        enterSerial++
+        Store.opened++
         ld.item?.forceActiveFocus()
         animateTo(1)
     }
@@ -126,7 +126,6 @@ ShellRoot {
     }
 
     property int pageDir: 1
-    property int enterSerial: 0
 
     function selectPage(id) {
         if (id === page) return
@@ -282,6 +281,8 @@ ShellRoot {
                             height: parent.height
                             radius: rounding
                             color: Theme.alpha(Theme.bg, 0.64)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.fg, 0.07)
                         }
 
                         Item {
@@ -411,21 +412,7 @@ ShellRoot {
                                             width: body.width
                                             spacing: 6
 
-                                            property real enter: 0
-                                            opacity: enter
-                                            transform: Translate { x: (1 - sec.enter) * 22 * root.pageDir; y: (1 - sec.enter) * 10 }
-
-                                            SequentialAnimation {
-                                                id: enterAnim
-                                                PropertyAction { target: sec; property: "enter"; value: 0 }
-                                                PauseAnimation { duration: Theme.ms(40 + Math.min(sec.index, 6) * 70) }
-                                                NumberAnimation { target: sec; property: "enter"; to: 1; duration: Theme.ms(460); easing.type: Easing.OutCubic }
-                                            }
-                                            Component.onCompleted: enterAnim.start()
-                                            Connections {
-                                                target: root
-                                                function onEnterSerialChanged() { enterAnim.restart() }
-                                            }
+                                            Rise { target: sec; index: sec.index; replay: Store.opened }
 
                                             Label {
                                                 x: 4
@@ -458,25 +445,12 @@ ShellRoot {
                                                             property real reveal: on ? 1 : 0
                                                             Behavior on reveal { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
 
-                                                            property real rowEnter: 0
-                                                            SequentialAnimation {
-                                                                id: rowAnim
-                                                                PropertyAction { target: row; property: "rowEnter"; value: 0 }
-                                                                PauseAnimation { duration: Theme.ms(140 + Math.min(sec.index, 6) * 70 + Math.min(row.index, 8) * 45) }
-                                                                NumberAnimation { target: row; property: "rowEnter"; to: 1; duration: Theme.ms(420); easing.type: Easing.OutCubic }
-                                                            }
-                                                            Component.onCompleted: rowAnim.start()
-                                                            Connections {
-                                                                target: root
-                                                                function onEnterSerialChanged() { rowAnim.restart() }
-                                                            }
-                                                            transform: Translate { y: (1 - row.rowEnter) * 8 }
 
                                                             width: rows.width
                                                             height: inner.height * reveal
-                                                            opacity: reveal * rowEnter
+                                                            opacity: reveal
                                                             visible: reveal > 0.001
-                                                            clip: reveal < 1 || rowEnter < 1
+                                                            clip: reveal < 1
 
                                                             Column {
                                                                 id: inner
@@ -514,8 +488,6 @@ ShellRoot {
                                 width: parent.width
                                 active: root.current.themes === true
                                 source: "Themes.qml"
-                                onLoaded: themesFade.restart()
-                                NumberAnimation { id: themesFade; target: themesHost; property: "opacity"; from: 0; to: 1; duration: Theme.ms(240); easing.type: Easing.OutCubic }
                             }
                         }
 

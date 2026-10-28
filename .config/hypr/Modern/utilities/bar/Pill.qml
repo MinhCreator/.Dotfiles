@@ -285,6 +285,7 @@ Item {
         visible: opacity > 0
         z: front ? 1 : 0
         transform: Translate { y: (1 - slot.f) * 8 }
+        Rise { target: slot.item }
         active: page !== ""
         sourceComponent: ({ workspaces: workspacesC, island: islandC, network: networkC, audio: audioC, power: powerC, tray: trayC })[page] ?? null
     }

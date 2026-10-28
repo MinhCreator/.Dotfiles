@@ -31,6 +31,8 @@ Singleton {
     property var pending: ({})
     // the colors page, so the window can drive it from the keyboard
     property var picker: null
+    // bumped every time the panel opens so pages replay their Rise
+    property int opened: 0
     property string lastSnapshot: ""
     property bool refreshAfter: false
 

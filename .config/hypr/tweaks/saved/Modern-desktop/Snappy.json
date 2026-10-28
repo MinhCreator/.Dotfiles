@@ -15,7 +15,7 @@
     "kind": "waybar"
   },
   "colors": {
-    "theme": "pywal"
+    "theme": "dark/gruvbox"
   },
   "config": {
     "animations": {
