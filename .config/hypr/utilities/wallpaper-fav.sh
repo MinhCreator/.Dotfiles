@@ -3,7 +3,8 @@
 set -euo pipefail
 
 LIB="${WALLPAPER_LIBRARY:-$HOME/wallpapers/library}"
-LIST="$LIB/favorites.txt"
+# resolve it since favorites.txt is a symlink into Dotfiles and mv would clobber the link
+LIST=$(readlink -f "$LIB/favorites.txt")
 path="${1:?usage: wallpaper-fav.sh <image>}"
 rel=$(realpath --relative-to="$(readlink -f "$LIB")" "$(readlink -f "$path")")
 

@@ -1,12 +1,11 @@
 #!/bin/bash
-# copies whatever is favorited in ~/wallpapers/library into the dotfiles, those are the defaults
+# favorites.txt is symlinked from ~/wallpapers/library. copies whatever is favorited in ~/wallpapers/library into the dotfiles, those are the defaults
 # everything else only lives in the wallpapers repo
 cd "$(git rev-parse --show-toplevel)"
 src="${WALLPAPER_LIBRARY:-$HOME/wallpapers/library}" dst=wallpapers/library
 [[ -f $src/favorites.txt ]] || exit 0
 
 mkdir -p "$dst"
-cp "$src/favorites.txt" "$dst/"
 find "$dst" -mindepth 2 -type f | sed "s|^$dst/||" | grep -vxFf "$dst/favorites.txt" | sed "s|^|$dst/|" | xargs -r -d '\n' rm --
 while read -r f; do [[ -f $src/$f ]] && install -CDm644 "$src/$f" "$dst/$f"; done < "$dst/favorites.txt"
 find "$dst" -mindepth 1 -type d -empty -delete

@@ -117,6 +117,7 @@ apply_dotfiles() {
     # ~/wallpapers used to link into here, now it's a real folder seeded with the favorites
     [[ -L "$HOME/wallpapers" ]] && rm "$HOME/wallpapers"
     mkdir -p "$HOME/wallpapers/library"
+    link_entry "$DOTFILES_DIR/wallpapers/library/favorites.txt" "$HOME/wallpapers/library/favorites.txt" "$backup/wallpapers"
     cp -rn "$DOTFILES_DIR/wallpapers/library/." "$HOME/wallpapers/library/"
 
     git -C "$DOTFILES_DIR" config core.hooksPath .githooks
