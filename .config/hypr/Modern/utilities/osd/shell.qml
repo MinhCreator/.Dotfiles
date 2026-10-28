@@ -27,7 +27,7 @@ ShellRoot {
     readonly property real fullWidth: 300
     readonly property real w: Math.max(0, (t - 0.2) / 0.8)
 
-    readonly property color accent: Theme.accent
+    readonly property color accent: kind === "volume" ? Theme.info : kind === "brightness" ? Theme.caution : hasBar ? Theme.accent : Theme.accent2
     readonly property color fg: Theme.fg
     readonly property color bright: Theme.bright
     readonly property color dim: Theme.dim

@@ -260,7 +260,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: Theme.isSpotify(page.player) ? "" : "󰝚"
                             font.pixelSize: 11
-                            color: Theme.accent
+                            color: Theme.ok
                         }
                         Label {
                             anchors.verticalCenter: parent.verticalCenter
@@ -489,7 +489,7 @@ Item {
                     PathAngleArc { centerX: 75; centerY: 75; radiusX: 68; radiusY: 68; startAngle: 0; sweepAngle: 360 }
                 }
                 ShapePath {
-                    strokeColor: page.timer.running ? Theme.accent : Theme.alpha(Theme.accent, 0.55)
+                    strokeColor: page.timer.running ? Theme.accent2 : Theme.alpha(Theme.caution, 0.7)
                     strokeWidth: 7
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
@@ -519,7 +519,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: page.timer.running ? "Focusing" : page.timer.active ? "Paused" : "Ready"
                     font.pixelSize: 11
-                    color: page.timer.running ? Theme.accent : Theme.dim
+                    color: page.timer.running ? Theme.accent2 : page.timer.active ? Theme.caution : Theme.dim
                 }
             }
         }
@@ -553,7 +553,7 @@ Item {
                         width: presets.cell
                         height: 30
                         radius: Math.min(Theme.rounding, 10)
-                        color: current && page.timer.active ? Theme.alpha(Theme.accent, 0.3)
+                        color: current && page.timer.active ? Theme.alpha(Theme.accent2, 0.3)
                             : Theme.alpha(Theme.fg, presetArea.containsMouse ? 0.12 : 0.055)
                         Behavior on color { ColorAnimation { duration: Theme.fast } }
                         Label {
@@ -659,7 +659,7 @@ Item {
                     text: page.copied !== "" ? "Copied " + page.copied.toUpperCase()
                         : page.last !== "" ? "RGB  " + page.rgb(page.last) : "Pick one from anywhere on screen"
                     font.pixelSize: 11
-                    color: page.copied !== "" ? Theme.accent : Theme.dim
+                    color: page.copied !== "" ? Theme.ok : Theme.dim
                 }
 
                 Item { width: 1; height: 6 }
@@ -1001,7 +1001,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: wt.weather.ready ? wt.weather.glyph(wt.weather.code, wt.weather.night) : "󰖕"
                     font.pixelSize: 38
-                    color: Theme.accent
+                    color: wt.weather.night ? Theme.accent2 : Theme.caution
                 }
                 Label {
                     anchors.verticalCenter: parent.verticalCenter
@@ -1060,6 +1060,9 @@ Item {
                 property var points: graph.hours.map((h, i) => [graph.px(i), graph.py(h.temp)])
                 onPointsChanged: requestPaint()
                 onWidthChanged: requestPaint()
+                // canvas doesn't notice palette changes on its own
+                property color tint: Theme.caution
+                onTintChanged: requestPaint()
                 onPaint: {
                     const c = getContext("2d")
                     c.reset()
@@ -1078,13 +1081,13 @@ Item {
                     c.lineTo(p[0][0], 118)
                     c.closePath()
                     const g = c.createLinearGradient(0, 40, 0, 118)
-                    g.addColorStop(0, Theme.alpha(Theme.accent, 0.28))
-                    g.addColorStop(1, Theme.alpha(Theme.accent, 0))
+                    g.addColorStop(0, Theme.alpha(Theme.caution, 0.28))
+                    g.addColorStop(1, Theme.alpha(Theme.info, 0))
                     c.fillStyle = g
                     c.fill()
                     trace()
                     c.lineWidth = 2
-                    c.strokeStyle = Theme.accent
+                    c.strokeStyle = Theme.caution
                     c.stroke()
                 }
             }
@@ -1112,7 +1115,7 @@ Item {
                         width: 6
                         height: 6
                         radius: 3
-                        color: index === 0 ? Theme.bright : Theme.accent
+                        color: index === 0 ? Theme.bright : Theme.caution
                     }
                     Label {
                         anchors.horizontalCenter: parent.horizontalCenter

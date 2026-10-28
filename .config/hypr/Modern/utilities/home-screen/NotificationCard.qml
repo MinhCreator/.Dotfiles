@@ -48,7 +48,7 @@ Item {
         radius: card.shell.rounding
         color: card.popup ? shell.popupBg : (area.containsMouse ? "#26ffffff" : "#14ffffff")
         border.width: card.popup || card.critical ? 1 : 0
-        border.color: card.critical ? "#b3ff6b6b" : Qt.alpha(Theme.accent, 0.4)
+        border.color: Qt.alpha(card.critical ? Theme.warn : Theme.accent, card.critical ? 0.7 : 0.4)
         Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
         layer.enabled: card.popup
         layer.effect: MultiEffect {
@@ -95,7 +95,7 @@ Item {
             visible: card.iconSrc === ""
             text: card.critical ? "\uf071" : "\uf0f3"
             font.pixelSize: card.iconSize * 0.45
-            color: card.critical ? "#ff6b6b" : Theme.accent
+            color: card.critical ? Theme.warn : Theme.accent
         }
     }
 
@@ -180,7 +180,7 @@ Item {
         width: (card.width - card.pad * 2) * card.progress
         height: 2 * card.u
         radius: height / 2
-        color: card.critical ? "#ff6b6b" : Theme.accent
+        color: card.critical ? Theme.warn : Theme.accent
         opacity: 0.8
     }
 

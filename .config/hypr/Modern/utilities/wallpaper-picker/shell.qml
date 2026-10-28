@@ -65,6 +65,7 @@ ShellRoot {
         const c = p ?? Array.from({ length: 16 }, (_, i) => Theme.saved.colors["color" + i])
         waybar(["foreground " + c[15], "background " + c[0], "cursor " + c[15], ""]
             .concat(c.map((x, i) => "color" + i + " " + x))
+            .concat(["accent " + c[Theme.slotOf("accent")]])
             .map(l => l ? "@define-color " + l + ";" : "").join("\n") + "\n")
         terminals(c)
     }

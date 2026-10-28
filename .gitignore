@@ -3,6 +3,7 @@ __pycache__/
 .config/wal/colorschemes/dark/pywal16.json
 .config/hypr/.active-profile
 .config/hypr/.color-theme
+.config/hypr/.color-roles.json
 .config/hypr/.active-bar
 .config/hypr/.quickshell-bar
 .config/hypr/.active-saved.json

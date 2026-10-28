@@ -42,6 +42,96 @@ local function apply_pywal_plugin_overrides()
     vim.api.nvim_set_hl(0, "NeoTreeNormal", { fg = color_fg, bg = color_bg })
     vim.api.nvim_set_hl(0, "NeoTreeNormalNC", { fg = color_fg, bg = color_bg })
     vim.api.nvim_set_hl(0, "NeoTreeWinSeparator", { fg = color1, bg = color_bg })
+
+    -- pywal.nvim gives keywords, functions and statements all color6 and skips treesitter,
+    -- so lay out syntax like the real themes do: one hue per kind, italic keywords
+    local c = {}
+    for i = 0, 15 do c[i] = vim.g["color" .. i] or color_fg end
+    local function mix(a, b, t)
+        local x, y = tonumber(a:sub(2), 16), tonumber(b:sub(2), 16)
+        local out = 0
+        for s = 16, 0, -8 do
+            local p, q = math.floor(x / 2 ^ s) % 256, math.floor(y / 2 ^ s) % 256
+            out = out * 256 + math.floor(p + (q - p) * t + 0.5)
+        end
+        return string.format("#%06x", out)
+    end
+    -- color8 is too dark on some schemes, a gray from the text color always reads
+    local gray = mix(color_bg, color_fg, 0.45)
+    local subtle = mix(color_bg, color_fg, 0.08)
+
+    for group, spec in pairs({
+        Comment = { fg = gray, italic = true },
+        ["@comment"] = { link = "Comment" },
+        LineNr = { fg = mix(color_bg, color_fg, 0.3) },
+        CursorLineNr = { fg = c[11], bold = true },
+        CursorLine = { bg = subtle },
+        ColorColumn = { bg = subtle },
+        Visual = { bg = mix(color_bg, c[4], 0.3) },
+        Search = { fg = color_bg, bg = c[2] },
+        IncSearch = { fg = color_bg, bg = c[9] },
+        MatchParen = { bg = mix(color_bg, color_fg, 0.2), bold = true },
+
+        Keyword = { fg = c[9], italic = true },
+        Statement = { fg = c[9], italic = true },
+        Conditional = { fg = c[9], italic = true },
+        Repeat = { fg = c[9], italic = true },
+        Exception = { fg = c[9], italic = true },
+        Label = { fg = c[11] },
+        Operator = { fg = c[11] },
+        Function = { fg = c[12] },
+        ["@function.builtin"] = { fg = c[12], italic = true },
+        ["@function.call"] = { fg = c[12] },
+        ["@function.method"] = { fg = c[12] },
+        ["@constructor"] = { fg = c[12] },
+        String = { fg = c[10] },
+        Character = { fg = c[10] },
+        ["@string.escape"] = { fg = c[14] },
+        ["@string.regexp"] = { fg = c[14] },
+        ["@string.special"] = { fg = c[14] },
+        Number = { fg = c[13] },
+        Float = { fg = c[13] },
+        Boolean = { fg = c[13] },
+        Constant = { fg = c[13] },
+        ["@constant.builtin"] = { fg = c[13], italic = true },
+        Type = { fg = c[11] },
+        ["@type.builtin"] = { fg = c[11], italic = true },
+        Identifier = { fg = color_fg },
+        ["@variable"] = { fg = color_fg },
+        ["@variable.builtin"] = { fg = c[14], italic = true },
+        ["@variable.parameter"] = { fg = c[14] },
+        ["@variable.member"] = { fg = c[14] },
+        ["@property"] = { fg = c[14] },
+        ["@module"] = { fg = c[11], italic = true },
+        PreProc = { fg = c[13], italic = true },
+        Include = { fg = c[13], italic = true },
+        Define = { fg = c[13], italic = true },
+        Special = { fg = c[11] },
+        ["@punctuation.special"] = { fg = c[11] },
+        ["@punctuation.bracket"] = { fg = gray },
+        Delimiter = { fg = gray },
+        ["@tag"] = { fg = c[9] },
+        ["@tag.attribute"] = { fg = c[11], italic = true },
+        Title = { fg = c[9], bold = true },
+        ["@markup.heading"] = { link = "Title" },
+        ["@markup.link"] = { fg = c[12], underline = true },
+        Todo = { fg = color_bg, bg = c[12], bold = true },
+
+        DiagnosticError = { fg = c[9] },
+        DiagnosticWarn = { fg = c[11] },
+        DiagnosticInfo = { fg = c[12] },
+        DiagnosticHint = { fg = c[14] },
+        DiffAdd = { bg = mix(color_bg, c[2], 0.2) },
+        DiffChange = { bg = mix(color_bg, c[4], 0.2) },
+        DiffDelete = { bg = mix(color_bg, c[1], 0.2) },
+        GitSignsAdd = { fg = c[10] },
+        GitSignsChange = { fg = c[12] },
+        GitSignsDelete = { fg = c[9] },
+        SnacksIndent = { fg = mix(color_bg, color_fg, 0.12) },
+        SnacksIndentScope = { fg = mix(color_bg, color_fg, 0.3) },
+    }) do
+        vim.api.nvim_set_hl(0, group, spec)
+    end
 end
 
 local function set_colorscheme(theme)

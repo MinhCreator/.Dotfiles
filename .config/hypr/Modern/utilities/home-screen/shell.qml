@@ -415,6 +415,7 @@ ShellRoot {
         property real ratio: 0
         property string label: ""
         property string valueText: ""
+        property color tint: Theme.accent
         property real shown: ratio
         Behavior on shown { NumberAnimation { duration: Theme.ms(700); easing.type: Easing.OutCubic } }
 
@@ -436,7 +437,7 @@ ShellRoot {
                     PathAngleArc { centerX: dial.width / 2; centerY: dial.height / 2; radiusX: dial.width / 2 - 5 * root.u; radiusY: dial.height / 2 - 5 * root.u; startAngle: -90; sweepAngle: 360 }
                 }
                 ShapePath {
-                    strokeColor: Theme.accent
+                    strokeColor: ga.tint
                     strokeWidth: 6 * root.u
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
@@ -641,7 +642,7 @@ ShellRoot {
                             anchors.centerIn: parent
                             text: "\uf1bc"
                             font.pixelSize: 20 * root.u
-                            color: Theme.accent
+                            color: Theme.ok
                             opacity: spotifyMa.containsMouse ? 1 : 0.75
                             scale: spotifyMa.containsMouse ? 1.15 : 1
                             Behavior on opacity { NumberAnimation { duration: Theme.ms(120) } }
@@ -854,9 +855,9 @@ ShellRoot {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 14 * root.u
                         Gauge { ratio: root.cpu; label: "CPU"; valueText: Math.round(root.cpu * 100) + "%" }
-                        Gauge { ratio: 1 - root.memAvail / root.memTotal; label: "Memory"; valueText: Math.round((1 - root.memAvail / root.memTotal) * 100) + "%" }
-                        Gauge { visible: root.hasGpu; ratio: root.gpuUtil; label: "GPU"; valueText: Math.round(root.gpuUtil * 100) + "%" }
-                        Gauge { visible: root.hasBattery; ratio: root.batPct / 100; label: root.batState === "Charging" ? "Charging" : "Battery"; valueText: root.batPct + "%" }
+                        Gauge { tint: Theme.accent2; ratio: 1 - root.memAvail / root.memTotal; label: "Memory"; valueText: Math.round((1 - root.memAvail / root.memTotal) * 100) + "%" }
+                        Gauge { tint: Theme.info; visible: root.hasGpu; ratio: root.gpuUtil; label: "GPU"; valueText: Math.round(root.gpuUtil * 100) + "%" }
+                        Gauge { tint: root.batPct < 20 && root.batState !== "Charging" ? Theme.warn : Theme.ok; visible: root.hasBattery; ratio: root.batPct / 100; label: root.batState === "Charging" ? "Charging" : "Battery"; valueText: root.batPct + "%" }
                     }
 
                     Row {
@@ -898,7 +899,7 @@ ShellRoot {
                                     width: parent.width * Math.max(0, Math.min(1, 1 - root.memAvail / root.memTotal))
                                     height: parent.height
                                     radius: height / 2
-                                    color: Theme.accent
+                                    color: Theme.accent2
                                 }
                             }
                             Label {
@@ -945,7 +946,7 @@ ShellRoot {
                                     width: parent.width * Math.max(0, Math.min(1, root.gpuMemUsed / Math.max(0.1, root.gpuMemTotal)))
                                     height: parent.height
                                     radius: height / 2
-                                    color: Theme.accent
+                                    color: Theme.info
                                 }
                             }
                             Label {
@@ -1080,7 +1081,7 @@ ShellRoot {
                             IconButton {
                                 size: 28 * root.u
                                 glyph: root.dnd ? "\uf1f6" : "\uf0f3"
-                                tint: root.dnd ? Theme.accent : "#ffffff"
+                                tint: root.dnd ? Theme.accent2 : "#ffffff"
                                 onClicked: root.dnd = !root.dnd
                             }
                             IconButton {

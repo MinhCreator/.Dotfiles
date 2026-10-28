@@ -14,6 +14,9 @@
     "bar": {
       "kind": "waybar"
     },
+    "colors": {
+      "theme": "pywal"
+    },
     "wallpaper": {
       "path": "/home/$USER/wallpapers/library/sunset/sun-17.jpg"
     },

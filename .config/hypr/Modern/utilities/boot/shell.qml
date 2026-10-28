@@ -9,7 +9,11 @@ ShellRoot {
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string sans: "CodeNewRoman Nerd Font Propo"
+    // same roles as common/Theme.qml, boot can't import it
     readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
+    readonly property color accent2: wal ? wal.colors.color13 : "#c3a6ff"
+    readonly property color info: wal ? wal.colors.color14 : "#9fe0d0"
+    readonly property color ok: wal ? wal.colors.color10 : "#98c379"
     readonly property color dim: wal ? wal.colors.color8 : "#716e5d"
     readonly property color bright: wal ? wal.colors.color15 : "#ffffff"
     readonly property color ink: wal ? wal.special.background : "#101418"
@@ -335,7 +339,7 @@ ShellRoot {
                     radius: width / 2
                     color: "transparent"
                     border.width: 1
-                    border.color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.12)
+                    border.color: Qt.rgba(root.info.r, root.info.g, root.info.b, 0.16)
                     rotation: root.boot * 18
                 }
 
@@ -346,7 +350,7 @@ ShellRoot {
                     radius: width / 2
                     color: "transparent"
                     border.width: 2
-                    border.color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.22)
+                    border.color: Qt.rgba(root.accent2.r, root.accent2.g, root.accent2.b, 0.26)
                     rotation: -root.boot * 28
                 }
 
@@ -374,7 +378,7 @@ ShellRoot {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: parent.height / 2 + Math.min(parent.width, parent.height) * 0.09
                     text: "SESSION / " + (root.boot < 0.82 ? "INITIALIZING" : "READY")
-                    color: root.accent
+                    color: root.boot < 0.82 ? root.accent : root.ok
                     font.family: root.sans
                     font.pixelSize: 11
                     font.letterSpacing: 2
@@ -391,7 +395,7 @@ ShellRoot {
 
                 Text {
                     text: "BOOTSTRAP // LIVE"
-                    color: root.accent
+                    color: root.accent2
                     font.family: root.sans
                     font.pixelSize: 11
                     font.letterSpacing: 2

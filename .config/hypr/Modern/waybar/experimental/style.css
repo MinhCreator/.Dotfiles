@@ -34,7 +34,7 @@ tooltip {
 }
 #clock:hover, #custom-pacman:hover, #custom-notification:hover,#bluetooth:hover,#network:hover,#battery:hover, #cpu:hover,#memory:hover,#temperature:hover{
     transition: all .3s ease;
-    color:@color9;
+    color:@accent;
 }
 #custom-notification {
     padding: 0px 5px;

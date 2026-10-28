@@ -61,6 +61,7 @@ Item {
         Chip {
             pill: mod.pill
             text: Quickshell.env("USER")
+            tint: Theme.accent2
             onClicked: b => mod.ctx.run(b === Qt.RightButton ? "~/.config/hypr/utilities/shells.sh settings"
                 : b === Qt.MiddleButton ? "~/.config/hypr/utilities/shells.sh launcher"
                 : "~/.config/hypr/utilities/shells.sh home")
@@ -243,6 +244,8 @@ Item {
             Chip {
                 pill: mod.pill
                 glyph: "󰅢"
+                tint: Theme.caution
+                glyphColor: Theme.caution
                 text: mod.ctx.updates > 0 ? mod.ctx.updates : ""
                 onClicked: b => { if (b === Qt.LeftButton) mod.ctx.runUpdate() }
             }
@@ -262,6 +265,7 @@ Item {
             Chip {
                 pill: mod.pill
                 page: "network"
+                tint: Theme.info
                 faded: !netRow.dev
                 glyph: {
                     const d = netRow.dev
@@ -282,6 +286,7 @@ Item {
                     pill: mod.pill
                     page: "network"
                     glyph: "󰂱"
+                    glyphColor: Theme.accent
                     text: netRow.paired.length > 1 ? netRow.paired.length + " devices"
                         : netRow.paired.length === 1 ? (netRow.paired[0].name || "") : ""
                     maxText: 100
@@ -374,7 +379,8 @@ Item {
             pill: mod.pill
             page: "power"
             glyph: ""
-            glyphColor: lit || low ? Theme.warn : Theme.bright
+            tint: Theme.ok
+            glyphColor: low ? Theme.warn : lit ? tint : Power.charging ? Theme.ok : Theme.bright
         }
     }
 
@@ -410,7 +416,9 @@ Item {
         property bool faded: false
         property bool clickOpens: true
         readonly property bool lit: page !== "" && pill.open && pill.shownPage === page && (page !== "tray" || pill.shownTray === tray)
-        property color glyphColor: lit ? Theme.accent : Theme.bright
+        // what it lights up as, so the pills aren't all one color
+        property color tint: Theme.accent
+        property color glyphColor: lit ? tint : Theme.bright
         // dragging on this sets a value instead of clicking
         property Item scrub: null
         property bool scrubbing: false
@@ -430,7 +438,7 @@ Item {
             height: chip.pill.pillH - 2
             width: Math.max(height, row.implicitWidth + 14)
             radius: chip.pill.radius(height)
-            color: chip.lit ? Theme.alpha(Theme.accent, 0.26) : Theme.alpha(Theme.fg, area.containsMouse ? 0.1 : 0)
+            color: chip.lit ? Theme.alpha(chip.tint, 0.26) : Theme.alpha(Theme.fg, area.containsMouse ? 0.1 : 0)
             Behavior on color { ColorAnimation { duration: Theme.fast } }
 
             Row {

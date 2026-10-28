@@ -1707,7 +1707,7 @@ exit 0`, "sh", up ? "up" : "save", uuid, name, sec, kind].concat(kv)
                     width: Math.max(parent.height, parent.width * bat.charge)
                     height: parent.height
                     radius: parent.radius
-                    color: bat.low ? Theme.warn : Theme.accent
+                    color: bat.low ? Theme.warn : Theme.ok
                     Behavior on width { NumberAnimation { duration: Theme.move; easing.type: Easing.OutCubic } }
                 }
             }
@@ -1771,7 +1771,7 @@ exit 0`, "sh", up ? "up" : "save", uuid, name, sec, kind].concat(kv)
                 anchors.verticalCenter: parent.verticalCenter
                 text: (menu.dnd ? "󰂛" : "󰂚") + "  Do not disturb"
                 font.pixelSize: 12
-                color: menu.dnd ? Theme.accent : Theme.fg
+                color: menu.dnd ? Theme.accent2 : Theme.fg
             }
             Switch {
                 anchors.right: parent.right

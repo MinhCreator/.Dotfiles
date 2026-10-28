@@ -4,30 +4,39 @@ import Quickshell.Io
 import "../common"
 
 // color themes, shown as a lil terminal cause it looked cool. hover a row to preview, click to apply.
-// customize copies the whole scheme into a draft, then you pick a color, mess with it, name it, save. pretty sure that's it
+// new theme starts with 16 empty slots, each one says what goes there. pick a slot, set it (hex, sliders or the eyedropper), name it, save
 Item {
     id: tp
 
     // a palette is color0-15 then background, foreground, cursor, same order as the scheme files.
     // the preview colors stuff by what quickshell actually uses it for (see common/Theme.qml):
-    // color9 accent, color7 text, color15 bright, color8 comments, color1 warn. took me a minute to figure out
+    // color7 text, color15 bright, color8 comments, the accent is whatever slot the role row below points at
     readonly property var entries: {
         const p = Store.pywalPalette
-        const pywal = p.length >= 16 ? [{ id: "pywal", name: "Pywal", palette: p.slice(0, 16).concat([p[0], p[15], p[15]]) }] : []
+        const pywal = p.length >= 16 ? [{ id: "pywal", name: "Pywal", palette: full(p.slice(0, 16)) }] : []
         return pywal.concat(Store.themes)
     }
     readonly property var slotNames: Array.from({ length: 16 }, (_, i) => "color" + i)
+    // what each slot is for, the usual terminal scheme layout. short one goes under the swatch, long one in the hex box
+    readonly property var hints: [["bg", "background, darkest"], ["red", "red, errors"], ["green", "green, strings"],
+        ["yellow", "yellow, warnings"], ["blue", "blue, functions"], ["magenta", "magenta, keywords"], ["cyan", "cyan, info"],
+        ["text", "text, light gray"], ["dim", "comments, dim gray"], ["accent", "accent, warm red/orange"], ["green+", "bright green"],
+        ["yellow+", "bright yellow"], ["blue+", "bright blue"], ["second", "2nd accent, bright magenta"], ["cyan+", "bright cyan"],
+        ["white", "brightest text"]]
+    // background follows color0, foreground and cursor follow color15, same as pywal
+    function full(p) { return p.concat([p[0], p[15], p[15]]) }
     property int cur: 0
     readonly property var entry: entries[cur] ?? { id: "", name: "", palette: [] }
     property var draft: null
     property string draftName: ""
     property int slot: 1
     // color0-7 by default, 16 felt crammed. the toggle opens the rest
-    property bool full: false
+    property bool all16: false
     readonly property var compact: [0, 1, 2, 3, 4, 5, 6, 7]
-    readonly property var slots: full ? Array.from({ length: 16 }, (_, i) => i) : compact
-    readonly property var shown: draft ?? entry.palette
-    readonly property color picked: draft ? draft[slot] : "black"
+    readonly property var slots: all16 || draft ? Array.from({ length: 16 }, (_, i) => i) : compact
+    // empty slots preview as gray till you fill them
+    readonly property var shown: draft ? full(draft.map(c => c || "#808080")) : entry.palette
+    readonly property color picked: draft ? draft[slot] || "#808080" : "black"
     // follows hyprland's rounding so it matches everything else
     readonly property real r: Math.min(Theme.rounding, 10)
 
@@ -68,35 +77,44 @@ Item {
     Component.onCompleted: { sync(); Store.picker = tp }
     Component.onDestruction: if (Store.picker === tp) Store.picker = null
 
-    function customize() {
-        const p = entry.palette
-        pairs = [16, 17, 18].map(s => p.slice(0, 16).findIndex(c => String(c).toLowerCase() === String(p[s]).toLowerCase()))
+    function create() {
         instant = true
-        draft = p.slice()
+        draft = Array(16).fill("")
         jumble.restart()
-        draftName = entry.custom ? entry.name : entry.name + " custom"
-        slot = 1
+        draftName = ""
+        slot = 0
     }
-    // background, foreground and cursor don't get their own swatches, they just follow
-    // whichever of the 16 they matched when you hit customize. -1 means no match so leave it alone
-    property var pairs: [-1, -1, -1]
     function setSlot(c) {
         const d = draft.slice()
         d[slot] = String(c)
-        pairs.forEach((p, i) => { if (p === slot) d[16 + i] = String(c) })
         instant = true
         draft = d
     }
+    // hyprpicker through the same script as the bar, only takes the color if the history file got a new one (esc = nothing)
+    Process {
+        id: eyedropper
+        command: ["sh", "-c", 'm=$(mktemp); f=~/.cache/colorpicker/colors; ~/.config/waybar/scripts/colorpicker.sh >/dev/null 2>&1; [ "$f" -nt "$m" ] && head -n1 "$f"; rm -f "$m"']
+        stdout: StdioCollector { onStreamFinished: if (tp.draft && /^#[0-9a-f]{6}$/i.test(text.trim())) tp.setSlot(text.trim().toLowerCase()) }
+    }
 
+    // can't save with holes, jumps to the first empty one instead
     function save() {
+        const empty = draft.indexOf("")
+        if (empty >= 0) { slot = empty; return }
         const name = draftName.trim() || "Custom"
-        const id = (Qt.color(draft[16]).hslLightness > 0.5 ? "light/" : "dark/")
+        const id = (Qt.color(draft[0]).hslLightness > 0.5 ? "light/" : "dark/")
             + (name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "custom")
         const colors = {}
-        draft.slice(0, 16).forEach((c, i) => colors["color" + i] = c)
+        draft.forEach((c, i) => colors["color" + i] = c)
         run(id, ["sh", "-c", 'mkdir -p "$(dirname "$1")" && printf "%s" "$2" > "$1"', "sh", file(id),
-            JSON.stringify({ name: name, custom: true, special: { background: draft[16], foreground: draft[17], cursor: draft[18] }, colors: colors })])
+            JSON.stringify({ name: name, custom: true, special: { background: draft[0], foreground: draft[15], cursor: draft[15] }, colors: colors })])
         draft = null
+    }
+    property string role: "accent"
+    function setRoles(r) {
+        run("", ["sh", "-c", 'printf "%s" "$2" > "$1" && "$3" && hyprctl reload config-only', "sh",
+            Quickshell.env("HOME") + "/.config/hypr/.color-roles.json", JSON.stringify(r),
+            Quickshell.env("HOME") + "/.config/hypr/utilities/color-roles.sh"])
     }
     function remove(e) { run(e.id === Store.colorTheme ? "pywal" : "", ["rm", "-f", file(e.id)]) }
     function file(id) { return Quickshell.env("HOME") + "/.config/wal/colorschemes/" + id + ".json" }
@@ -119,6 +137,8 @@ Item {
     // not a binding cause typing would break it. only pushes value in when it actually differs from what you typed
     component Field: Rectangle {
         property string value
+        // shown while it's empty
+        property string hint
         readonly property alias text: input.text
         signal done()
         signal edited()
@@ -145,6 +165,16 @@ Item {
             // snaps half typed junk back to the real value
             onEditingFinished: { text = parent.value; parent.done() }
             Keys.onEscapePressed: tp.draft = null
+        }
+        Label {
+            visible: !input.text
+            x: 10
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - 20
+            elide: Text.ElideRight
+            text: parent.hint
+            font.pixelSize: 12
+            color: Theme.dim
         }
     }
 
@@ -181,9 +211,9 @@ Item {
                     color: tp.fg
                     text: tp.c(4, "~/themes") + " " + tp.c(9, "❯") + tp.t(" wal --theme ") + tp.j((tp.draft ? tp.draftName : tp.entry.name).toLowerCase().replace(/ /g, "-")) + "<br>"
                         + tp.c(13, "fn") + " " + tp.c(12, "apply") + tp.t("(scheme: ") + tp.c(14, "&[Rgb; 16]") + tp.t(") {") + "<br>"
-                        + "&nbsp;&nbsp;" + tp.c(13, "let") + tp.t(" glow = ") + tp.c(3, "0.35") + tp.t("; ") + tp.span(8, tp.t("// ") + tp.j(tp.draft ? "editing " + tp.slotNames[tp.slot] : tp.entry.id === "pywal" ? "from the wallpaper" : tp.entry.custom ? "yours" : "stock")) + "<br>"
+                        + "&nbsp;&nbsp;" + tp.c(13, "let") + tp.t(" glow = ") + tp.c(3, "0.35") + tp.t("; ") + tp.span(8, tp.t("// ") + tp.j(tp.draft ? tp.slotNames[tp.slot] + " is " + tp.hints[tp.slot][1] : tp.entry.id === "pywal" ? "from the wallpaper" : tp.entry.custom ? "yours" : "stock")) + "<br>"
                         + "&nbsp;&nbsp;" + tp.c(1, "panic!") + tp.t("(") + tp.c(2, "\"warn\"") + tp.t(");") + "<br>"
-                        + "&nbsp;&nbsp;" + tp.c(13, "return") + " " + tp.c(9, "\"" + tp.lc(9) + "\"") + tp.t("; ") + tp.span(8, tp.t("// accent")) + "<br>"
+                        + "&nbsp;&nbsp;" + tp.c(13, "return") + " " + tp.c(Theme.slotOf("accent"), "\"" + tp.lc(Theme.slotOf("accent")) + "\"") + tp.t("; ") + tp.span(8, tp.t("// accent")) + "<br>"
                         + tp.t("}") + " " + tp.c(18, "▌")
                 }
 
@@ -192,11 +222,12 @@ Item {
                     width: parent.width
                     height: 46
                     Button {
+                        visible: !tp.draft
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 8
-                        label: tp.full ? "fewer ▴" : "all 16 ▾"
-                        onPressed: tp.full = !tp.full
+                        label: tp.all16 ? "fewer ▴" : "all 16 ▾"
+                        onPressed: tp.all16 = !tp.all16
                     }
                 }
 
@@ -234,8 +265,8 @@ Item {
                             Label {
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
-                                // reads the animating color so the digits roll
-                                text: tp.lc(cell.s).slice(1)
+                                // reads the animating color so the digits roll. empty slots say what they're for
+                                text: tp.draft && !tp.draft[cell.s] ? tp.hints[cell.s][0] : tp.lc(cell.s).slice(1)
                                 font.pixelSize: 9
                                 // the theme's own white but faded, keeps it calm
                                 color: tp.lc(15)
@@ -252,7 +283,7 @@ Item {
             id: list
             visible: !tp.draft
             width: parent.width
-            height: body.height - term.height - add.height - body.spacing * 2
+            height: body.height - term.height - roleBox.height - add.height - body.spacing * 3
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             model: tp.entries
@@ -334,16 +365,51 @@ Item {
             }
         }
 
+        // which slot each role uses everywhere (quickshell, waybar, the hyprland border). pick a role, then a color.
+        // right-click puts them all back
+        Column {
+            id: roleBox
+            visible: !tp.draft
+            width: parent.width
+            spacing: 8
+            Rise { target: roleBox; index: 2; replay: Store.opened }
+            Segmented {
+                width: parent.width
+                options: [{ v: "accent", l: "primary" }, { v: "accent2", l: "second" }, { v: "ok", l: "ok" },
+                    { v: "caution", l: "caution" }, { v: "info", l: "info" }, { v: "warn", l: "warn" }]
+                current: tp.role
+                onPicked: v => tp.role = v
+            }
+            Row {
+                spacing: 4
+                Repeater {
+                    model: 16
+                    Rectangle {
+                        required property int index
+                        readonly property bool on: Theme.slotOf(tp.role) === index
+                        width: (roleBox.width - 15 * 4) / 16
+                        height: 16
+                        radius: Math.min(Theme.rounding, 4)
+                        color: tp.lc(index)
+                        border.width: on ? 2 : 1
+                        border.color: on ? Theme.bright : Theme.alpha(Theme.fg, 0.15)
+                        Hover { anchors.fill: parent; onClicked: tp.setRoles(Object.assign({}, Theme.roles, { [tp.role]: index })) }
+                    }
+                }
+            }
+            TapHandler { acceptedButtons: Qt.RightButton; onTapped: tp.setRoles({}) }
+        }
+
         IconButton {
             id: add
             visible: !tp.draft
-            text: "+ customize " + tp.entry.name.toLowerCase()
+            text: "+ new theme"
             font.pixelSize: 12
-            onClicked: tp.customize()
-            Rise { target: add; index: 2; replay: Store.opened }
+            onClicked: tp.create()
+            Rise { target: add; index: 3; replay: Store.opened }
         }
 
-        // customize mode
+        // new theme mode
         Column {
             visible: !!tp.draft
             width: parent.width
@@ -353,15 +419,24 @@ Item {
                 width: parent.width
                 spacing: 8
                 Field {
-                    width: (parent.width - 8) * 0.35
-                    value: String(tp.picked)
+                    width: (parent.width - 16 - dropper.width) * 0.35
+                    value: tp.draft ? tp.draft[tp.slot] : ""
+                    hint: tp.draft ? tp.hints[tp.slot][1] : ""
                     onEdited: {
                         const h = text.trim().replace("#", "").toLowerCase()
                         if (/^[0-9a-f]{6}$/.test(h)) tp.setSlot("#" + h)
                     }
                 }
+                IconButton {
+                    id: dropper
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "󰈊"
+                    font.pixelSize: 16
+                    onClicked: eyedropper.running = true
+                }
                 Field {
-                    width: (parent.width - 8) * 0.65
+                    width: (parent.width - 16 - dropper.width) * 0.65
+                    hint: "theme name"
                     value: tp.draftName
                     onEdited: tp.draftName = text
                     onDone: tp.save()

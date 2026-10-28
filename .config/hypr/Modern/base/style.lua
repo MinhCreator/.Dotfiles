@@ -13,6 +13,10 @@ local function load_wal_colors(path)
 end
 
 local colors = load_wal_colors(os.getenv("HOME") .. "/.cache/wal/colors-hyprland")
+-- primary picked in settings > colors, same file quickshell reads
+local roles = io.open(os.getenv("HOME") .. "/.config/hypr/.color-roles.json", "r")
+local accent = roles and roles:read("a"):match('"accent"%s*:%s*(%d+)') or "9"
+if roles then roles:close() end
 
 hl.config({
     general = {
@@ -20,7 +24,7 @@ hl.config({
         gaps_out = 10,
         border_size = 0,
         col = {
-            active_border = colors.color9,
+            active_border = colors["color" .. accent],
             inactive_border = colors.color5,
         },
         resize_on_border = true,
@@ -43,7 +47,7 @@ hl.config({
         shadow = {
             enabled = true,
             range = 15,
-            render_power = 5,
+            render_power = 4,
             color = "rgba(0,0,0,.5)",
         },
     },

@@ -29,6 +29,7 @@ fi
 
 [ -f "$wallpaper" ] && printf '%s' "$wallpaper" > "$HOME/.cache/wal/wal"
 
+"$HYPR/utilities/color-roles.sh"
 cat ~/.cache/wal/colors-kitty.conf > ~/.config/kitty/current-theme.conf
 pywalfox update >/dev/null 2>&1 || true
 
@@ -50,11 +51,11 @@ mono_option = average
 [color]
 horizontal_gradient = 1
 horizontal_gradient_count = 5
-horizontal_gradient_color_1 = '$(walc color4)'
-horizontal_gradient_color_2 = '$(walc color9)'
-horizontal_gradient_color_3 = '$(walc color13)'
-horizontal_gradient_color_4 = '$(walc color12)'
-horizontal_gradient_color_5 = '$(walc color14)'
+horizontal_gradient_color_1 = '$(walc color12)'
+horizontal_gradient_color_2 = '$(walc color14)'
+horizontal_gradient_color_3 = '$(walc color10)'
+horizontal_gradient_color_4 = '$(walc color11)'
+horizontal_gradient_color_5 = '$(walc color13)'
 
 [smoothing]
 noise_reduction = 72

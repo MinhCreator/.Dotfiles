@@ -150,8 +150,8 @@ Item {
                         anchors.bottomMargin: clockRow.size * 0.2
                         leftPadding: 10 * face.u
                         readonly property string ss: String(clock.seconds).padStart(2, "0")
-                        Digit { value: parent.ss[0]; size: clockRow.size * 0.26; color: Theme.accent; weight: Font.Normal }
-                        Digit { value: parent.ss[1]; size: clockRow.size * 0.26; color: Theme.accent; weight: Font.Normal }
+                        Digit { value: parent.ss[0]; size: clockRow.size * 0.26; color: Theme.accent2; weight: Font.Normal }
+                        Digit { value: parent.ss[1]; size: clockRow.size * 0.26; color: Theme.accent2; weight: Font.Normal }
                     }
                 }
                 Label {
@@ -231,7 +231,7 @@ Item {
                             width: 10 * face.u
                             height: width
                             radius: width / 2
-                            color: Theme.accent
+                            color: Theme.accent2
                             scale: 0
                             Component.onCompleted: pop.start()
                             NumberAnimation on scale { id: pop; running: false; to: 1; duration: Theme.ms(260); easing.type: Easing.OutBack; easing.overshoot: 2.2 }
@@ -306,14 +306,14 @@ Item {
                 width: 120 * face.u
                 height: width
                 radius: Lock.corner(width, face.u)
-                color: Theme.alpha(Theme.accent, 0.12)
+                color: Theme.alpha(Theme.info, 0.12)
 
                 Label {
                     anchors.centerIn: parent
                     visible: cover.status !== Image.Ready
                     text: ""
                     font.pixelSize: 40 * face.u
-                    color: Theme.accent
+                    color: Theme.info
                 }
                 Image {
                     id: cover
@@ -379,7 +379,7 @@ Item {
                     Rectangle {
                         height: parent.height
                         radius: parent.radius
-                        color: Theme.accent
+                        color: Theme.info
                         width: card.p && card.p.length > 0 ? parent.width * Math.min(1, card.p.position / card.p.length) : 0
                         Behavior on width { NumberAnimation { duration: 1000; easing.type: Easing.Linear } }
                     }

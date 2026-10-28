@@ -208,16 +208,34 @@ Singleton {
         colors: preview.reduce((o, c, i) => (o["color" + i] = c, o), {}),
         special: { background: preview[0], foreground: preview[15] }
     } : saved
-    readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
-    readonly property color fg: wal ? wal.colors.color7 : "#c7c6c2"
-    readonly property color bright: wal ? wal.colors.color15 : "#ffffff"
+    // the bright half (9-14) reads best on the dark panels. on the nvim schemes that's real red/green/yellow/blue/magenta/cyan,
+    // on pywal it's just six different wallpaper tones, which is still way better than color9 on everything
+    function c(i, fallback) { return wal ? wal.colors["color" + i] : fallback }
+    readonly property color red: c(9, "#e06c75")
+    readonly property color green: c(10, "#98c379")
+    readonly property color yellow: c(11, "#e5c07b")
+    readonly property color blue: c(12, "#8fd3ff")
+    readonly property color magenta: c(13, "#c3a6ff")
+    readonly property color cyan: c(14, "#9fe0d0")
+
+    // what stuff actually uses, so it isn't color9 on everything
+    // settings > colors can point any of these at another slot, saved as { role: slot }
+    Watched { id: rolesFile; path: Quickshell.env("HOME") + "/.config/hypr/.color-roles.json" }
+    readonly property var roles: { try { return JSON.parse(rolesFile.text()) } catch (e) { return {} } }
+    readonly property var roleSlots: ({ accent: 9, accent2: 13, ok: 10, caution: 11, info: 14, warn: 1 })
+    function slotOf(role) { return roles[role] ?? roleSlots[role] }
+    readonly property color accent: c(slotOf("accent"), "#8fd3ff")
+    readonly property color accent2: c(slotOf("accent2"), magenta)
+    readonly property color ok: c(slotOf("ok"), green)
+    readonly property color caution: c(slotOf("caution"), yellow)
+    readonly property color info: c(slotOf("info"), cyan)
+    readonly property color warn: c(slotOf("warn"), "#e06c75")
+    readonly property color fg: c(7, "#c7c6c2")
+    readonly property color bright: c(15, "#ffffff")
     // based on the text color, color8 is too dark on some schemes
     readonly property color dim: Qt.rgba(fg.r, fg.g, fg.b, 0.5)
     readonly property color bg: wal ? wal.special.background : "#101418"
-    readonly property color warn: wal ? wal.colors.color1 : "#e06c75"
-    readonly property var spectrum: wal
-        ? [wal.colors.color4, wal.colors.color9, wal.colors.color13, wal.colors.color12, wal.colors.color14]
-        : ["#5f87af", "#8fd3ff", "#c3a6ff", "#87afd7", "#9fe0d0"]
+    readonly property var spectrum: [blue, cyan, green, yellow, magenta]
 
     function alpha(c, a) {
         return Qt.rgba(c.r, c.g, c.b, a)

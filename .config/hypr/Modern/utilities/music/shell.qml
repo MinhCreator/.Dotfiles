@@ -413,7 +413,7 @@ ShellRoot {
                                             width: root.px(6)
                                             height: width
                                             radius: width / 2
-                                            color: root.playing ? Theme.accent : Theme.dim
+                                            color: root.playing ? Theme.ok : Theme.dim
                                             Behavior on color { ColorAnimation { duration: Theme.move } }
                                             SequentialAnimation on opacity {
                                                 running: root.active && root.playing
@@ -750,7 +750,7 @@ ShellRoot {
                 height: parent.height
                 width: Math.max(parent.height, parent.width * vb.level)
                 radius: height / 2
-                color: root.muted ? Theme.dim : Theme.accent
+                color: root.muted ? Theme.dim : Theme.info
                 Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
@@ -854,7 +854,7 @@ ShellRoot {
                     height: parent.height
                     radius: parent.radius
                     width: Math.max(height, parent.width * sk.frac)
-                    color: Theme.accent
+                    color: Theme.accent2
                     // animating this restarts every frame and it stutters like hell
                     Behavior on width {
                         enabled: !sk.seeking && !root.playing
