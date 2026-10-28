@@ -62,7 +62,7 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
   - Dont worry it doesn't delete anything. It asks to back up your `~/.config` first and moves anything it replaces to `~/.dotfiles_replaced_<date>`.
 
   ```
-  cd && git clone --single-branch https://github.com/elifouts/Dotfiles.git
+  cd && git clone --depth 1 https://github.com/elifouts/Dotfiles.git
   cd ~/Dotfiles/InstallScripts
   chmod +x install.sh
   ./install.sh
