@@ -33,7 +33,8 @@ cat ~/.cache/wal/colors-kitty.conf > ~/.config/kitty/current-theme.conf
 pywalfox update >/dev/null 2>&1 || true
 
 walc() { awk -v k="$1" 'match($0, "^" k "=\47(.*)\47", a) { print a[1] }' ~/.cache/wal/colors.sh; }
-cat > "$HOME/.config/cava/config" <<CAVA
+mkdir -p "$(readlink -m "$HOME/.config/cava")"
+cat >"$HOME/.config/cava/config" <<CAVA
 [general]
 framerate = 60
 autosens = 1
