@@ -23,7 +23,6 @@ ShellRoot {
     property string indexText: ""
     property var targetScreen: null
     property bool locating: false
-    property string pendingPath: ""
     // keep the preview until awww draws it, i think there's a race
     property bool holding: false
     property var previewed: null
@@ -99,11 +98,10 @@ ShellRoot {
         path: root.home + "/.cache/wallpaper-picker/current"
     }
     readonly property string applied: curFile.text().trim()
-    readonly property string landing: pendingPath !== "" ? pendingPath : applied
 
     onAppliedChanged: {
-        if (applied === pendingPath) { pendingPath = ""; holding = false; Theme.preview = null; tinted = false; waybar("") }
-        if (!shown) rebuild(landing)
+        if (holding) { holding = false; Theme.preview = null; tinted = false; waybar("") }
+        if (!shown) rebuild(applied)
     }
 
     function seg(delay) {
@@ -170,7 +168,6 @@ ShellRoot {
 
     function apply() {
         if (!current || leaving) return
-        pendingPath = current.path
         holding = current.path !== applied
         holdTimer.restart()
         Quickshell.execDetached([home + "/.config/hypr/utilities/wallpaper-apply.sh", current.path])
@@ -192,7 +189,7 @@ ShellRoot {
         if (shown && !leaving) return
         leaving = false
         t = 0
-        if (!current || current.path !== landing) rebuild(landing)
+        rebuild(applied)
         targetScreen = screen
         previewed = current
         shown = true
@@ -213,7 +210,7 @@ ShellRoot {
         leaving = false
         t = 0
         if (theme !== "all") theme = "all"
-        rebuild(landing)
+        rebuild(applied)
     }
 
     Timer { id: holdTimer; interval: 8000; onTriggered: { root.holding = false; root.tint(null) } }
@@ -308,7 +305,7 @@ ShellRoot {
                     root.close()
                     return
                 }
-                root.rebuild(root.shown && root.current ? root.current.path : root.landing)
+                root.rebuild(root.shown && root.current ? root.current.path : root.applied)
             }
         }
     }
