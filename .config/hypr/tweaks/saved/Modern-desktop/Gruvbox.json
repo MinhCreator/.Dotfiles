@@ -15,7 +15,7 @@
     "kind": "quickshell"
   },
   "colors": {
-    "theme": "dark/gruvbox-custom"
+    "theme": "dark/gruvbox"
   },
   "config": {
     "animations": {
