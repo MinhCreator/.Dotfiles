@@ -423,7 +423,6 @@ ShellRoot {
 
     component ChipRow: Item {
         id: row
-        property bool drawn: true
         property Item sel: null
         property bool settled: false
         readonly property int h: Math.round(36 * root.u)
@@ -469,8 +468,8 @@ ShellRoot {
                         height: row.h
                         opacity: chip.shown
                         scale: 0.6 + 0.4 * chip.shown
-                        Pill { visible: row.drawn; radius: row.radius; fill: Theme.alpha(Theme.bg, 0.6); edge: Theme.alpha(Theme.fg, 0.07) }
-                        CenterText { id: label; visible: row.drawn; text: chip.modelData; color: "#ffffff" }
+                        Pill { radius: row.radius; fill: Theme.alpha(Theme.bg, 0.6); edge: Theme.alpha(Theme.fg, 0.07) }
+                        CenterText { id: label; text: chip.modelData; color: "#ffffff" }
                         MouseArea {
                             anchors.fill: parent
                             enabled: chip.present
@@ -484,7 +483,7 @@ ShellRoot {
 
         Item {
             id: highlight
-            visible: row.drawn && !!row.sel
+            visible: !!row.sel
             property real l: row.sel ? row.sel.x : 0
             property real r: row.sel ? row.sel.x + row.sel.full : 0
             Behavior on l { id: lb; enabled: row.settled; NumberAnimation { duration: lb.targetValue > highlight.l ? row.trail : row.lead; easing.type: Easing.OutCubic } }
@@ -547,22 +546,6 @@ ShellRoot {
             Binding { target: root; property: "previewReady"; value: shot.ready; when: modelData === win.screen }
             MouseArea { anchors.fill: parent; onClicked: root.close() }
         }
-    }
-
-    // separate layer so hyprglass can blur the chips, this is what i think works
-    PanelWindow {
-        visible: root.shown && Theme.glass && root.t > 0
-        screen: win.screen
-        anchors { bottom: true; left: true; right: true }
-        implicitHeight: win.implicitHeight
-        color: "transparent"
-        exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "wallpaper-picker-tab"
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        mask: Region {}
-
-        ChipRow {}
     }
 
     PanelWindow {
@@ -813,6 +796,6 @@ ShellRoot {
             }
         }
 
-        ChipRow { id: chipBar; drawn: !Theme.glass }
+        ChipRow { id: chipBar }
     }
 }

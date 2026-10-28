@@ -171,15 +171,6 @@ if hl.plugin.hyprglass then
         exclude = false,
     })
 
-    hg.layer("wallpaper-picker-tab", {
-        preset = PRESET,
-        mask_threshold = 0.01,
-        mask_mode = "alpha",
-        mask_feather = 0.1,
-        live_resample = true,
-        exclude = false,
-    })
-
     hg.layer("music-player", {
         preset = PRESET,
         mask_threshold = 0.01,

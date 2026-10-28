@@ -511,7 +511,7 @@ def cmd_appearance():
     wallpaper = settings_wallpaper(settings)
     if wallpaper:
         write_atomic(THEME_FILE, theme + "\n")
-        detached(str(HYPR / "utilities/wallpaper-apply.sh"), wallpaper, env={"HYPR_SETTINGS_NO_RECORD": "1"})
+        detached(str(HYPR / "utilities/wallpaper-apply.sh"), wallpaper, env={"HYPR_SETTINGS_NO_RECORD": "1", "WALLPAPER_TRANSITION": "fade"})
     elif theme != current_theme():
         detached(str(HYPR / "utilities/color-apply.sh"), theme)
     kind = dig(settings, "bar.kind") or DEFAULT_BAR

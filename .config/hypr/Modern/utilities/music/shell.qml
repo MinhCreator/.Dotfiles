@@ -303,6 +303,7 @@ ShellRoot {
         Loader {
             id: ld
             active: root.active || root.warm
+            focus: true
             sourceComponent: Component {
                 Item {
                     id: card
@@ -314,7 +315,8 @@ ShellRoot {
                     opacity: root.active ? Math.min(1, root.t * 8) : 0
                     focus: true
 
-                    HoverHandler { id: hover }
+                    // hovering is enough for keys, clicking used to be the only thing that grabbed focus
+                    HoverHandler { id: hover; onHoveredChanged: if (hovered) card.forceActiveFocus() }
 
                     Keys.onPressed: event => {
                         const k = event.key

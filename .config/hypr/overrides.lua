@@ -27,7 +27,6 @@ end
 local QUICKSHELL_LAYERS = table.concat({
     "quickshell-bar", "settings-panel", "settings-panel-outside", "app-drawer",
     "music-player", "notification-popup", "osd", "home-screen", "boot-sequence", "profile-switcher",
-    "wallpaper-picker", "wallpaper-picker-preview", "wallpaper-picker-tab",
 }, ",")
 local targets = S.hyprglass
 if targets and (targets.layers ~= nil or targets.quickshell ~= nil) then
