@@ -12,6 +12,7 @@ echo "1. Full install"
 echo "2. Waybar (standalone)"
 echo "3. Quickshell bar (standalone)"
 echo "p. Package manager TUI"
+echo "u. Uninstall everything"
 echo "q. Quit"
 echo ""
 read -rp "Choose an option: " choice
@@ -21,6 +22,7 @@ case "${choice,,}" in
     2) target="waybarinstall.sh" ;;
     3) target="quickshellbarinstall.sh" ;;
     p) target="../.config/hypr/utilities/package-tui.sh" ;;
+    u) target="uninstall.sh" ;;
     q) echo "Goodbye."; exit 0 ;;
     *) echo "Invalid choice: $choice"; exit 1 ;;
 esac
