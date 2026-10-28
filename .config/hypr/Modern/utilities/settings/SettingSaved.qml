@@ -127,7 +127,7 @@ Item {
                     width: primed ? binText.implicitWidth + 18 : 28
                     height: 28
                     radius: Theme.r(8)
-                    color: primed ? Theme.alpha("#e5566d", 0.45) : Theme.alpha(Theme.fg, binArea.containsMouse ? 0.14 : 0)
+                    color: primed ? Theme.soft(Theme.warn) : Theme.alpha(Theme.fg, binArea.containsMouse ? 0.14 : 0)
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                     Behavior on width { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutCubic } }
 
@@ -136,7 +136,7 @@ Item {
                         anchors.centerIn: parent
                         text: bin.primed ? "Delete?" : ""
                         font.pixelSize: bin.primed ? 11 : 13
-                        color: bin.primed || binArea.containsMouse ? Theme.bright : Theme.dim
+                        color: bin.primed ? Theme.on(Theme.warn) : binArea.containsMouse ? Theme.bright : Theme.dim
                     }
 
                     Hover {
@@ -214,7 +214,7 @@ Item {
                 height: 32
                 radius: Theme.r(8)
                 opacity: control.draft ? 1 : 0.4
-                color: Theme.alpha(Theme.accent, saveArea.containsMouse && control.draft ? 0.45 : 0.3)
+                color: Theme.soft(Theme.accent, saveArea.containsMouse && control.draft)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
                 Label {
@@ -222,7 +222,7 @@ Item {
                     anchors.centerIn: parent
                     text: control.exists ? "Overwrite" : "Save"
                     font.pixelSize: 12
-                    color: Theme.bright
+                    color: Theme.ink
                 }
 
                 Hover {
@@ -232,16 +232,6 @@ Item {
                     onClicked: control.submit()
                 }
             }
-        }
-
-        Label {
-            x: Theme.pad
-            width: parent.width - Theme.pad * 2
-            height: implicitHeight + 10
-            wrapMode: Text.WordWrap
-            text: "" 
-            font.pixelSize: 11
-            color: Theme.dim
         }
 
         // deletes all saved profiles and variant tweaks, style folders stay
@@ -254,14 +244,14 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 9
                 radius: Theme.r(8)
-                color: parent.primed ? Theme.alpha("#e5566d", 0.45) : Theme.alpha(Theme.fg, wipeArea.containsMouse ? 0.14 : 0.07)
+                color: parent.primed ? Theme.soft(Theme.warn) : Theme.alpha(Theme.fg, wipeArea.containsMouse ? 0.14 : 0.07)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
                 Label {
                     anchors.centerIn: parent
                     text: parent.parent.primed ? "Click again to delete everything" : "Delete all saved profiles and tweaks"
                     font.pixelSize: 12
-                    color: parent.parent.primed || wipeArea.containsMouse ? Theme.bright : Theme.fg
+                    color: parent.parent.primed ? Theme.on(Theme.warn) : wipeArea.containsMouse ? Theme.bright : Theme.fg
                 }
 
                 Hover {

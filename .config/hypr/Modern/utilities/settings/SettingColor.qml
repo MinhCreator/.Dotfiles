@@ -69,7 +69,7 @@ Item {
             font.family: Theme.sans
             font.pixelSize: 12
             color: Theme.bright
-            selectionColor: Theme.alpha(Theme.accent, 0.6)
+            selectionColor: Theme.alpha(Theme.accent, 0.5)
             text: "#" + control.hex
             onActiveFocusChanged: if (activeFocus) selectAll()
             onEditingFinished: {

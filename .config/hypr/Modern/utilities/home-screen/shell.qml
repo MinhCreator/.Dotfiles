@@ -380,7 +380,7 @@ ShellRoot {
             y: 18 * root.u
             text: g.title
             font.pixelSize: 13 * root.u
-            color: "#80ffffff"
+            color: Theme.alpha(Theme.bright, 0.5)
         }
 
         Item {
@@ -394,7 +394,7 @@ ShellRoot {
     component IconButton: Item {
         id: ib
         property string glyph: ""
-        property color tint: "#ffffff"
+        property color tint: Theme.bright
         property real size: 40 * root.u
         signal clicked()
         width: size
@@ -431,7 +431,7 @@ ShellRoot {
                 layer.enabled: true
                 layer.samples: 4
                 ShapePath {
-                    strokeColor: "#1fffffff"
+                    strokeColor: Theme.alpha(Theme.bright, 0.12)
                     strokeWidth: 6 * root.u
                     fillColor: "transparent"
                     PathAngleArc { centerX: dial.width / 2; centerY: dial.height / 2; radiusX: dial.width / 2 - 5 * root.u; radiusY: dial.height / 2 - 5 * root.u; startAngle: -90; sweepAngle: 360 }
@@ -448,7 +448,7 @@ ShellRoot {
                 anchors.centerIn: parent
                 text: ga.valueText
                 font.pixelSize: 14 * root.u
-                color: "#ffffff"
+                color: Theme.bright
             }
         }
         Label {
@@ -456,7 +456,7 @@ ShellRoot {
             y: 74 * root.u
             text: ga.label
             font.pixelSize: 12 * root.u
-            color: "#99ffffff"
+            color: Theme.alpha(Theme.bright, 0.6)
         }
     }
 
@@ -473,14 +473,14 @@ ShellRoot {
         Rectangle {
             anchors.fill: parent
             radius: root.rr(20)
-            color: dma.containsMouse ? "#2effffff" : "#14ffffff"
+            color: dma.containsMouse ? Theme.alpha(Theme.bright, 0.18) : Theme.alpha(Theme.bright, 0.08)
             Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
         }
         Label {
             anchors.centerIn: parent
             text: db.glyph
             font.pixelSize: 24 * root.u
-            color: "#ffffff"
+            color: Theme.bright
         }
         Label {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -488,7 +488,7 @@ ShellRoot {
             text: db.label
             opacity: dma.containsMouse ? 1 : 0
             font.pixelSize: 12 * root.u
-            color: "#ffffff"
+            color: Theme.bright
             Behavior on opacity { NumberAnimation { duration: Theme.ms(150) } }
         }
         MouseArea { id: dma; anchors.fill: parent; hoverEnabled: true; onClicked: root.run(db.cmd) }
@@ -528,13 +528,13 @@ ShellRoot {
                         text: Qt.formatTime(clock.date, "HH:mm")
                         font.pixelSize: 110 * side.su
                         font.weight: Font.Light
-                        color: "#ffffff"
+                        color: Theme.bright
                     }
                     Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDate(clock.date, "dddd, d MMMM")
                         font.pixelSize: 20 * side.su
-                        color: "#ccffffff"
+                        color: Theme.alpha(Theme.bright, 0.8)
                     }
                 }
             }
@@ -608,13 +608,13 @@ ShellRoot {
                     text: Qt.formatTime(clock.date, "HH:mm")
                     font.pixelSize: 128 * root.u
                     font.weight: Font.Light
-                    color: "#ffffff"
+                    color: Theme.bright
                 }
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatDate(clock.date, "dddd, d MMMM")
                     font.pixelSize: 22 * root.u
-                    color: "#ccffffff"
+                    color: Theme.alpha(Theme.bright, 0.8)
                 }
             }
 
@@ -663,13 +663,13 @@ ShellRoot {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "\uf001"
                             font.pixelSize: 34 * root.u
-                            color: "#55ffffff"
+                            color: Theme.alpha(Theme.bright, 0.33)
                         }
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "Not playing"
                             font.pixelSize: 14 * root.u
-                            color: "#80ffffff"
+                            color: Theme.alpha(Theme.bright, 0.5)
                         }
                     }
 
@@ -682,7 +682,7 @@ ShellRoot {
                             width: 100 * root.u
                             height: 100 * root.u
                             radius: root.rr(18)
-                            color: "#22ffffff"
+                            color: Theme.alpha(Theme.bright, 0.13)
                             Image {
                                 anchors.fill: parent
                                 source: media.pl && media.pl.trackArtUrl ? media.pl.trackArtUrl : ""
@@ -704,14 +704,14 @@ ShellRoot {
                                 text: media.pl ? media.pl.trackTitle : ""
                                 elide: Text.ElideRight
                                 font.pixelSize: 17 * root.u
-                                color: "#ffffff"
+                                color: Theme.bright
                             }
                             Label {
                                 width: parent.width
                                 text: media.pl ? media.pl.trackArtist : ""
                                 elide: Text.ElideRight
                                 font.pixelSize: 13 * root.u
-                                color: "#99ffffff"
+                                color: Theme.alpha(Theme.bright, 0.6)
                             }
                         }
 
@@ -726,26 +726,26 @@ ShellRoot {
                                 width: parent.width
                                 height: 5 * root.u
                                 radius: height / 2
-                                color: "#26ffffff"
+                                color: Theme.alpha(Theme.bright, 0.15)
                                 Rectangle {
                                     height: parent.height
                                     radius: height / 2
                                     width: parent.width * Math.min(1, prog.ratio)
-                                    color: "#f2ffffff"
+                                    color: Theme.alpha(Theme.bright, 0.95)
                                 }
                             }
                             Label {
                                 y: 14 * root.u
                                 text: root.fmtTime(media.pl ? media.pl.position : 0)
                                 font.pixelSize: 11 * root.u
-                                color: "#80ffffff"
+                                color: Theme.alpha(Theme.bright, 0.5)
                             }
                             Label {
                                 y: 14 * root.u
                                 anchors.right: parent.right
                                 text: root.fmtTime(prog.len)
                                 font.pixelSize: 11 * root.u
-                                color: "#80ffffff"
+                                color: Theme.alpha(Theme.bright, 0.5)
                             }
                             MouseArea {
                                 anchors.fill: parent
@@ -811,7 +811,7 @@ ShellRoot {
                                 text: modelData
                                 font.family: Theme.sans
                                 font.pixelSize: 12 * root.u
-                                color: "#66ffffff"
+                                color: Theme.alpha(Theme.bright, 0.4)
                             }
                         }
                         Repeater {
@@ -831,14 +831,14 @@ ShellRoot {
                                     height: width
                                     radius: width / 2
                                     visible: cell.today
-                                    color: Theme.accent
+                                    color: Theme.soft(Theme.accent)
                                 }
                                 Label {
                                     anchors.centerIn: parent
                                     text: cell.modelData > 0 ? cell.modelData : ""
                                     font.pixelSize: 14 * root.u
                                     font.weight: cell.today ? Font.DemiBold : Font.Normal
-                                    color: cell.today ? "#101418" : "#e6ffffff"
+                                    color: cell.today ? Theme.ink : Theme.alpha(Theme.bright, 0.9)
                                 }
                             }
                         }
@@ -870,14 +870,14 @@ ShellRoot {
                             width: (parent.width - parent.spacing) / 2
                             height: parent.height
                             radius: root.rr(8)
-                            color: "#12ffffff"
+                            color: Theme.alpha(Theme.bright, 0.07)
 
                             Label {
                                 x: 10 * root.u
                                 y: 8 * root.u
                                 text: "RAM"
                                 font.pixelSize: 10 * root.u
-                                color: "#80ffffff"
+                                color: Theme.alpha(Theme.bright, 0.5)
                             }
                             Label {
                                 x: 10 * root.u
@@ -886,7 +886,7 @@ ShellRoot {
                                 text: ((root.memTotal - root.memAvail) / 1048576).toFixed(1) + " / " + (root.memTotal / 1048576).toFixed(0) + " GB"
                                 elide: Text.ElideRight
                                 font.pixelSize: 9 * root.u
-                                color: "#ddffffff"
+                                color: Theme.alpha(Theme.bright, 0.87)
                             }
                             Rectangle {
                                 x: 10 * root.u
@@ -894,7 +894,7 @@ ShellRoot {
                                 width: parent.width - 20 * root.u
                                 height: 5 * root.u
                                 radius: height / 2
-                                color: "#20ffffff"
+                                color: Theme.alpha(Theme.bright, 0.13)
                                 Rectangle {
                                     width: parent.width * Math.max(0, Math.min(1, 1 - root.memAvail / root.memTotal))
                                     height: parent.height
@@ -908,7 +908,7 @@ ShellRoot {
                                 anchors.bottomMargin: 7 * root.u
                                 text: "AVAILABLE  " + (root.memAvail / 1048576).toFixed(1) + " GB"
                                 font.pixelSize: 9 * root.u
-                                color: "#70ffffff"
+                                color: Theme.alpha(Theme.bright, 0.44)
                             }
                         }
 
@@ -916,14 +916,14 @@ ShellRoot {
                             width: (parent.width - parent.spacing) / 2
                             height: parent.height
                             radius: root.rr(8)
-                            color: "#12ffffff"
+                            color: Theme.alpha(Theme.bright, 0.07)
 
                             Label {
                                 x: 10 * root.u
                                 y: 8 * root.u
                                 text: root.hasGpu ? "VRAM" : "MACHINE"
                                 font.pixelSize: 10 * root.u
-                                color: "#80ffffff"
+                                color: Theme.alpha(Theme.bright, 0.5)
                             }
                             Label {
                                 x: 10 * root.u
@@ -932,7 +932,7 @@ ShellRoot {
                                 elide: Text.ElideRight
                                 width: parent.width - 20 * root.u
                                 font.pixelSize: 9 * root.u
-                                color: "#ddffffff"
+                                color: Theme.alpha(Theme.bright, 0.87)
                             }
                             Rectangle {
                                 x: 10 * root.u
@@ -940,7 +940,7 @@ ShellRoot {
                                 width: parent.width - 20 * root.u
                                 height: 5 * root.u
                                 radius: height / 2
-                                color: "#20ffffff"
+                                color: Theme.alpha(Theme.bright, 0.13)
                                 visible: root.hasGpu
                                 Rectangle {
                                     width: parent.width * Math.max(0, Math.min(1, root.gpuMemUsed / Math.max(0.1, root.gpuMemTotal)))
@@ -957,7 +957,7 @@ ShellRoot {
                                 text: root.os || root.kernel
                                 elide: Text.ElideRight
                                 font.pixelSize: 10 * root.u
-                                color: "#aaffffff"
+                                color: Theme.alpha(Theme.bright, 0.67)
                             }
                             Label {
                                 x: 10 * root.u
@@ -969,7 +969,7 @@ ShellRoot {
                                 elide: Text.ElideRight
                                 width: parent.width - 20 * root.u
                                 font.pixelSize: 9 * root.u
-                                color: "#70ffffff"
+                                color: Theme.alpha(Theme.bright, 0.44)
                             }
                         }
                     }
@@ -983,20 +983,20 @@ ShellRoot {
                             text: root.cpuModel
                             elide: Text.ElideRight
                             font.pixelSize: 12 * root.u
-                            color: "#ccffffff"
+                            color: Theme.alpha(Theme.bright, 0.8)
                         }
                         Label {
                             width: parent.width
                             text: (root.hasGpu ? root.gpuName + "  ·  " : "") + (root.memTotal / 1048576).toFixed(0) + " GB"
                             elide: Text.ElideRight
                             font.pixelSize: 12 * root.u
-                            color: "#80ffffff"
+                            color: Theme.alpha(Theme.bright, 0.5)
                         }
                         Label {
                             width: parent.width
                             text: "Up " + root.fmtUptime(root.uptime) + (root.cpuTemp > 0 ? "  ·  " + Math.round(root.cpuTemp) + "°C" : "")
                             font.pixelSize: 12 * root.u
-                            color: "#80ffffff"
+                            color: Theme.alpha(Theme.bright, 0.5)
                         }
                     }
                 }
@@ -1018,7 +1018,7 @@ ShellRoot {
                                 y: -32 * root.u
                                 text: root.muted ? "Muted" : Math.round(root.volume * 100) + "%"
                                 font.pixelSize: 13 * root.u
-                                color: "#99ffffff"
+                                color: Theme.alpha(Theme.bright, 0.6)
                             }
 
                             Item {
@@ -1029,13 +1029,13 @@ ShellRoot {
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: height / 2
-                                    color: "#26ffffff"
+                                    color: Theme.alpha(Theme.bright, 0.15)
                                     clip: true
                                     Rectangle {
                                         height: parent.height
                                         width: Math.max(parent.height, parent.width * (root.muted ? 0 : root.volume))
                                         radius: height / 2
-                                        color: "#f2ffffff"
+                                        color: Theme.soft(Theme.info)
                                         Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                                     }
                                 }
@@ -1044,7 +1044,7 @@ ShellRoot {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: root.muted || root.volume === 0 ? "\uf026" : "\uf028"
                                     font.pixelSize: 15 * root.u
-                                    color: "#101418"
+                                    color: Theme.on(Theme.info)
                                 }
                                 MouseArea {
                                     id: volDrag
@@ -1081,7 +1081,7 @@ ShellRoot {
                             IconButton {
                                 size: 28 * root.u
                                 glyph: root.dnd ? "\uf1f6" : "\uf0f3"
-                                tint: root.dnd ? Theme.accent2 : "#ffffff"
+                                tint: root.dnd ? Theme.accent2 : Theme.bright
                                 onClicked: root.dnd = !root.dnd
                             }
                             IconButton {
@@ -1100,13 +1100,13 @@ ShellRoot {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.dnd ? "\uf1f6" : "\uf0f3"
                                 font.pixelSize: 34 * root.u
-                                color: "#55ffffff"
+                                color: Theme.alpha(Theme.bright, 0.33)
                             }
                             Label {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.dnd ? "Do Not Disturb" : "All clear"
                                 font.pixelSize: 14 * root.u
-                                color: "#80ffffff"
+                                color: Theme.alpha(Theme.bright, 0.5)
                             }
                         }
 
@@ -1150,7 +1150,7 @@ ShellRoot {
                             width: 3 * root.u
                             height: parent.height * notifList.visibleArea.heightRatio
                             radius: width / 2
-                            color: "#40ffffff"
+                            color: Theme.alpha(Theme.bright, 0.25)
                         }
                     }
                 }

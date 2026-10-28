@@ -493,7 +493,7 @@ ShellRoot {
             width: r - l
             height: row.h
 
-            Pill { radius: row.radius; fill: Theme.accent; edge: "transparent" }
+            Pill { radius: row.radius; fill: Theme.soft(Theme.accent); edge: "transparent" }
 
             // names again in dark, clipped to the highlight. it works, don't touch it
             Item {
@@ -514,7 +514,7 @@ ShellRoot {
                             CenterText {
                                 id: dark
                                 text: parent.modelData
-                                color: Theme.bg
+                                color: Theme.ink
                                 Behavior on color { Tint {} }
                             }
                         }

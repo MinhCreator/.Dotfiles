@@ -10,7 +10,7 @@ Rectangle {
     width: 38
     height: 22
     radius: Math.min(Theme.rounding, height / 2)
-    color: checked ? Theme.alpha(Theme.accent, 0.85) : Theme.alpha(Theme.fg, hot ? 0.24 : 0.16)
+    color: checked ? Theme.soft(Theme.accent) : Theme.alpha(Theme.fg, hot ? 0.24 : 0.16)
     Behavior on color { ColorAnimation { duration: Theme.ms(240) } }
 
     // front edge leads and the back one catches up, so it stretches and plants in one motion
@@ -27,7 +27,7 @@ Rectangle {
         width: sw.r - sw.l
         height: 16
         radius: Math.max(0, sw.radius - 3)
-        color: sw.checked ? Theme.bg : Theme.fg
+        color: sw.checked ? Theme.ink : Theme.fg
         Behavior on color { ColorAnimation { duration: sw.lead } }
     }
 

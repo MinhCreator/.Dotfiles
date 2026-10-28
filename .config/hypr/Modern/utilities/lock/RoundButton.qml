@@ -25,8 +25,8 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Lock.corner(b.size, b.u)
-        color: b.armed ? Theme.warn : Theme.accent
-        opacity: b.filled || b.armed ? (area.containsMouse ? 1 : 0.88) : area.containsMouse ? 0.12 : 0
+        color: Theme.soft(b.armed ? Theme.warn : Theme.accent, area.containsMouse)
+        opacity: b.filled || b.armed ? 1 : area.containsMouse ? 0.12 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.ms(160) } }
         Behavior on color { ColorAnimation { duration: Theme.ms(160) } }
     }
@@ -35,7 +35,7 @@ Item {
         anchors.centerIn: parent
         text: b.glyph
         font.pixelSize: b.size * 0.4
-        color: b.filled || b.armed ? Theme.bg : b.tint
+        color: b.filled || b.armed ? Theme.on(b.armed ? Theme.warn : Theme.accent) : b.tint
         Behavior on color { ColorAnimation { duration: Theme.ms(160) } }
     }
 

@@ -134,6 +134,8 @@ ShellRoot {
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property real volume: sink && sink.audio ? sink.audio.volume : 0
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
+    // dim is see-through so it lied about its color, this is what it really looks like
+    readonly property color volTint: muted ? Theme.along([Theme.bg, Theme.fg], 0.5) : Theme.info
     PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
 
     function setVolume(v) {
@@ -750,7 +752,7 @@ ShellRoot {
                 height: parent.height
                 width: Math.max(parent.height, parent.width * vb.level)
                 radius: height / 2
-                color: root.muted ? Theme.dim : Theme.info
+                color: Theme.soft(root.volTint)
                 Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
@@ -761,7 +763,7 @@ ShellRoot {
             anchors.verticalCenter: parent.verticalCenter
             text: root.muted || root.volume === 0 ? "\uf026" : "\uf028"
             font.pixelSize: root.px(12)
-            color: Theme.bg
+            color: Theme.on(root.volTint)
         }
 
         Label {
@@ -770,7 +772,7 @@ ShellRoot {
             anchors.verticalCenter: parent.verticalCenter
             text: root.muted ? "Muted" : Math.round(root.volume * 100) + "%"
             font.pixelSize: root.px(10)
-            color: vb.level > 0.8 ? Theme.bg : Theme.fg
+            color: vb.level > 0.8 ? Theme.on(root.volTint) : Theme.fg
         }
 
         Hover {
@@ -800,7 +802,7 @@ ShellRoot {
         Rectangle {
             anchors.fill: parent
             radius: width / 2
-            color: Theme.accent
+            color: Theme.soft(Theme.accent, pbArea.containsMouse)
             scale: pbArea.pressed ? 0.9 : (pbArea.containsMouse ? 1.05 : 1)
             Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack; easing.overshoot: 2.4 } }
 
@@ -808,7 +810,7 @@ ShellRoot {
                 anchors.centerIn: parent
                 width: Math.round(pb.size * 0.34)
                 height: width
-                color: Theme.bg
+                color: Theme.ink
                 m: root.playing ? 1 : 0
                 Behavior on m { NumberAnimation { duration: Theme.ms(340); easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
             }

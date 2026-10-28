@@ -42,7 +42,7 @@ Item {
             height: 28
             width: pillRow.implicitWidth + 22
             radius: Theme.r(8)
-            color: dd.open ? Theme.alpha(Theme.accent, 0.3) : Theme.alpha(Theme.fg, headArea.containsMouse ? 0.14 : 0.08)
+            color: dd.open ? Theme.soft(Theme.accent) : Theme.alpha(Theme.fg, headArea.containsMouse ? 0.14 : 0.08)
             Behavior on color { ColorAnimation { duration: Theme.fast } }
 
             Row {
@@ -64,14 +64,14 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: dd.selected ? dd.selected.l : "-"
                     font.pixelSize: 12
-                    color: Theme.bright
+                    color: dd.open ? Theme.ink : Theme.bright
                 }
 
                 Label {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "\uf078"
                     font.pixelSize: 9
-                    color: Theme.fg
+                    color: dd.open ? Theme.ink : Theme.fg
                     rotation: dd.open ? 180 : 0
                     Behavior on rotation { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
                 }
@@ -108,7 +108,7 @@ Item {
                     width: col.width
                     height: modelData.preview ? dd.rowH + strip.height + 6 : dd.rowH
                     radius: Theme.r(8)
-                    color: on ? Theme.alpha(Theme.accent, 0.28) : Theme.alpha(Theme.fg, rowArea.containsMouse ? 0.1 : 0)
+                    color: on ? Theme.soft(Theme.accent) : Theme.alpha(Theme.fg, rowArea.containsMouse ? 0.1 : 0)
                     Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
 
                     Row {
@@ -149,7 +149,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.l
                             font.pixelSize: 13
-                            color: on || rowArea.containsMouse ? Theme.bright : Theme.fg
+                            color: on ? Theme.ink : rowArea.containsMouse ? Theme.bright : Theme.fg
                         }
                     }
 
@@ -175,7 +175,7 @@ Item {
                         y: (dd.rowH - height) / 2
                         text: "\uf00c"
                         font.pixelSize: 11
-                        color: Theme.accent
+                        color: Theme.ink
                     }
 
                     Hover {

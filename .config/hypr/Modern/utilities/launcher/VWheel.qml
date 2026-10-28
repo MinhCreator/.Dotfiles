@@ -96,13 +96,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     radius: Theme.r(10) + 2 * row.ease
-                    color: Qt.rgba(
-                        Theme.fg.r + (Theme.accent.r - Theme.fg.r) * row.ease,
-                        Theme.fg.g + (Theme.accent.g - Theme.fg.g) * row.ease,
-                        Theme.fg.b + (Theme.accent.b - Theme.fg.b) * row.ease,
-                        0.045 + 0.215 * row.ease)
-                    border.width: 1
-                    border.color: Theme.alpha(Theme.accent, 0.55 * row.ease)
+                    color: Theme.alpha(Theme.along([Theme.fg, Theme.soft(Theme.accent)], row.ease), 0.045 + 0.795 * row.ease)
                 }
 
                 Label {
@@ -114,10 +108,7 @@ Item {
                     elide: Text.ElideRight
                     text: row.e ? row.e.n : ""
                     font.pixelSize: 15
-                    color: Qt.rgba(
-                        Theme.fg.r + (Theme.bright.r - Theme.fg.r) * row.ease,
-                        Theme.fg.g + (Theme.bright.g - Theme.fg.g) * row.ease,
-                        Theme.fg.b + (Theme.bright.b - Theme.fg.b) * row.ease, 1)
+                    color: Theme.along([Theme.fg, Theme.ink], row.ease)
                 }
 
                 Label {
@@ -130,7 +121,7 @@ Item {
                     elide: Text.ElideLeft
                     text: !row.e ? "" : row.e.k === "alias" ? "= " + row.e.d : row.e.k === "function" ? "function" : row.e.d
                     font.pixelSize: 11
-                    color: Theme.dim
+                    color: Theme.alpha(Theme.along([Theme.fg, Theme.ink], row.ease), 0.5 + 0.5 * row.ease)
                     opacity: 0.55 + 0.45 * row.ease
                 }
 

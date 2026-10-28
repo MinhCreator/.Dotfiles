@@ -640,7 +640,7 @@ ShellRoot {
                                     height: parent.height
                                     radius: Theme.r(9)
                                     x: root.tab * (tabBar.cellW + tabBar.gapW)
-                                    color: Theme.alpha(Theme.accent, 0.3)
+                                    color: Theme.soft(Theme.accent)
                                     Behavior on x { Settle { duration: Theme.move } }
                                 }
 
@@ -664,14 +664,14 @@ ShellRoot {
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: tabItem.modelData.icon
                                                 font.pixelSize: 13
-                                                color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
+                                                color: tabItem.on ? Theme.ink : tabArea.containsMouse ? Theme.bright : Theme.dim
                                                 Behavior on color { ColorAnimation { duration: Theme.fast } }
                                             }
                                             Label {
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: tabItem.modelData.label
                                                 font.pixelSize: 11
-                                                color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
+                                                color: tabItem.on ? Theme.ink : tabArea.containsMouse ? Theme.bright : Theme.dim
                                                 Behavior on color { ColorAnimation { duration: Theme.fast } }
                                             }
                                         }

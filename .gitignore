@@ -4,6 +4,7 @@ __pycache__/
 .config/hypr/.active-profile
 .config/hypr/.color-theme
 .config/hypr/.color-roles.json
+.config/hypr/.color-roles-saved.json
 .config/hypr/.active-bar
 .config/hypr/.quickshell-bar
 .config/hypr/.active-saved.json

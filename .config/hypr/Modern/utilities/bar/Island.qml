@@ -124,14 +124,14 @@ Item {
                     width: 32
                     height: 32
                     radius: Math.min(Theme.rounding, 10)
-                    color: on ? Theme.alpha(Theme.accent, 0.26) : Theme.alpha(Theme.fg, tabArea.containsMouse ? 0.1 : 0.04)
+                    color: on ? Theme.soft(Theme.accent) : Theme.alpha(Theme.fg, tabArea.containsMouse ? 0.1 : 0.04)
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
 
                     Label {
                         anchors.centerIn: parent
                         text: tab.modelData.glyph
                         font.pixelSize: 14
-                        color: tab.on ? Theme.accent : tabArea.containsMouse ? Theme.bright : Theme.fg
+                        color: tab.on ? Theme.ink : tabArea.containsMouse ? Theme.bright : Theme.fg
                     }
 
                     Hover {
@@ -385,7 +385,7 @@ Item {
                     width: 40
                     height: 40
                     radius: 20
-                    color: playArea.containsMouse ? Theme.accent : Theme.bright
+                    color: Theme.soft(Theme.accent, playArea.containsMouse)
                     scale: playArea.pressed ? 0.9 : 1
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                     Behavior on scale { NumberAnimation { duration: Theme.ms(120) } }
@@ -393,7 +393,7 @@ Item {
                         anchors.centerIn: parent
                         width: 14
                         height: 14
-                        color: Theme.bg
+                        color: Theme.ink
                         m: page.playing ? 1 : 0
                         Behavior on m { Settle { duration: Theme.move } }
                     }
@@ -553,14 +553,14 @@ Item {
                         width: presets.cell
                         height: 30
                         radius: Math.min(Theme.rounding, 10)
-                        color: current && page.timer.active ? Theme.alpha(Theme.accent2, 0.3)
+                        color: current && page.timer.active ? Theme.soft(Theme.accent2)
                             : Theme.alpha(Theme.fg, presetArea.containsMouse ? 0.12 : 0.055)
                         Behavior on color { ColorAnimation { duration: Theme.fast } }
                         Label {
                             anchors.centerIn: parent
                             text: parent.modelData + " min"
                             font.pixelSize: 12
-                            color: parent.current && page.timer.active ? Theme.bright : Theme.fg
+                            color: parent.current && page.timer.active ? Theme.on(Theme.accent2) : Theme.fg
                         }
                         Hover {
                             id: presetArea

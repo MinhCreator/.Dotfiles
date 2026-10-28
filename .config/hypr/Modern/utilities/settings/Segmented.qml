@@ -30,7 +30,7 @@ Item {
         width: seg.cell - 4
         height: parent.height - 4
         radius: Theme.r(6)
-        color: Theme.alpha(Theme.accent, 0.5)
+        color: Theme.soft(Theme.accent)
         Behavior on x { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
     }
 
@@ -51,7 +51,7 @@ Item {
                 elide: Text.ElideRight
                 text: modelData.l
                 font.pixelSize: 12
-                color: seg.index === index || area.containsMouse ? Theme.bright : Theme.fg
+                color: seg.index === index ? Theme.ink : area.containsMouse ? Theme.bright : Theme.fg
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
 

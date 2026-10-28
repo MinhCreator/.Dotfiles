@@ -233,7 +233,7 @@ Item {
                         font.family: Theme.sans
                         font.pixelSize: 12
                         color: Theme.bright
-                        selectionColor: Theme.alpha(Theme.accent, 0.6)
+                        selectionColor: Theme.alpha(Theme.accent, 0.5)
                         text: Number(control.curve[field.index]).toFixed(2)
                         onActiveFocusChanged: if (activeFocus) selectAll()
                         onEditingFinished: {
@@ -275,14 +275,14 @@ Item {
                 width: 112
                 height: 32
                 radius: Theme.r(9)
-                color: Theme.alpha(Theme.accent, diceArea.containsMouse ? 0.62 : 0.45)
+                color: Theme.soft(Theme.accent, diceArea.containsMouse)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
                 Label {
                     anchors.centerIn: parent
                     text: "\uf074   Randomize"
                     font.pixelSize: 12
-                    color: Theme.bright
+                    color: Theme.ink
                 }
 
                 Hover {

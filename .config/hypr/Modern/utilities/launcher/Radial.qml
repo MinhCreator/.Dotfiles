@@ -73,12 +73,9 @@ Item {
         radius: width / 2
         x: ring.width / 2 + Math.cos(ring.angle(ring.pos)) * ring.radius * ring.local(0) - width / 2
         y: ring.height / 2 + Math.sin(ring.angle(ring.pos)) * ring.radius * ring.local(0) - height / 2
-        color: Theme.alpha(ring.tint, 0.32)
-        border.width: 1
-        border.color: Theme.alpha(ring.tint, 0.6)
+        color: Theme.soft(ring.tint)
         opacity: ring.n > 0 ? ring.local(0) : 0
         Behavior on color { ColorAnimation { duration: Theme.fast } }
-        Behavior on border.color { ColorAnimation { duration: Theme.fast } }
     }
 
     Repeater {
@@ -109,7 +106,7 @@ Item {
                 text: b.modelData.icon
                 font.pixelSize: Math.round(ring.btn * 0.36)
                 scale: b.on ? 1.14 : 1
-                color: b.on || area.containsMouse ? Theme.bright : Theme.fg
+                color: b.on ? Theme.on(ring.tint) : area.containsMouse ? Theme.bright : Theme.fg
                 Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }

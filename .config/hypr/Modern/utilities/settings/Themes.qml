@@ -26,6 +26,8 @@ Item {
     // background follows color0, foreground and cursor follow color15, same as pywal
     function full(p) { return p.concat([p[0], p[15], p[15]]) }
     property int cur: 0
+    // right-click anywhere resets the colors. not while making a theme, that'd be evil
+    TapHandler { acceptedButtons: Qt.RightButton; enabled: !tp.draft; onTapped: Theme.setRole() }
     readonly property var entry: entries[cur] ?? { id: "", name: "", palette: [] }
     property var draft: null
     property string draftName: ""
@@ -111,11 +113,6 @@ Item {
         draft = null
     }
     property string role: "accent"
-    function setRoles(r) {
-        run("", ["sh", "-c", 'printf "%s" "$2" > "$1" && "$3" && hyprctl reload config-only', "sh",
-            Quickshell.env("HOME") + "/.config/hypr/.color-roles.json", JSON.stringify(r),
-            Quickshell.env("HOME") + "/.config/hypr/utilities/color-roles.sh"])
-    }
     function remove(e) { run(e.id === Store.colorTheme ? "pywal" : "", ["rm", "-f", file(e.id)]) }
     function file(id) { return Quickshell.env("HOME") + "/.config/wal/colorschemes/" + id + ".json" }
     function run(then, cmd) { writer.then = then; writer.command = cmd; writer.running = true }
@@ -160,7 +157,7 @@ Item {
             font.family: Theme.sans
             font.pixelSize: 12
             color: Theme.bright
-            selectionColor: Theme.alpha(Theme.accent, 0.6)
+            selectionColor: Theme.alpha(Theme.accent, 0.5)
             onTextEdited: parent.edited()
             // snaps half typed junk back to the real value
             onEditingFinished: { text = parent.value; parent.done() }
@@ -226,6 +223,7 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 8
+                        tone: tp.fg
                         label: tp.all16 ? "fewer ▴" : "all 16 ▾"
                         onPressed: tp.all16 = !tp.all16
                     }
@@ -320,7 +318,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     radius: tp.r
-                    color: Theme.alpha(Theme.accent, rowArea.containsMouse ? 0.34 : 0.26)
+                    color: Theme.soft(Theme.accent, rowArea.containsMouse)
                     opacity: row.on ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.ms(120) } }
                 }
@@ -335,7 +333,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: row.modelData.name.toLowerCase()
                     font.pixelSize: 12
-                    color: row.on ? Theme.accent : row.index === tp.cur ? Theme.bright : Theme.fg
+                    color: row.on ? Theme.ink : row.index === tp.cur ? Theme.bright : Theme.fg
                 }
                 IconButton {
                     visible: !!row.modelData.custom && (rowArea.containsMouse || hovered)
@@ -366,7 +364,7 @@ Item {
         }
 
         // which slot each role uses everywhere (quickshell, waybar, the hyprland border). pick a role, then a color.
-        // right-click puts them all back
+        // only changes the applied scheme (or wallpaper on pywal)
         Column {
             id: roleBox
             visible: !tp.draft
@@ -393,11 +391,10 @@ Item {
                         color: tp.lc(index)
                         border.width: on ? 2 : 1
                         border.color: on ? Theme.bright : Theme.alpha(Theme.fg, 0.15)
-                        Hover { anchors.fill: parent; onClicked: tp.setRoles(Object.assign({}, Theme.roles, { [tp.role]: index })) }
+                        Hover { anchors.fill: parent; onClicked: Theme.setRole(tp.role, index) }
                     }
                 }
             }
-            TapHandler { acceptedButtons: Qt.RightButton; onTapped: tp.setRoles({}) }
         }
 
         IconButton {

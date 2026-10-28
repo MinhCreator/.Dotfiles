@@ -224,17 +224,42 @@ Singleton {
     readonly property var roles: { try { return JSON.parse(rolesFile.text()) } catch (e) { return {} } }
     readonly property var roleSlots: ({ accent: 9, accent2: 13, ok: 10, caution: 11, info: 14, warn: 1 })
     function slotOf(role) { return roles[role] ?? roleSlots[role] }
+    // picks stick to the scheme you're on, call it empty to undo them
+    function setRole(role, slot) {
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/utilities/color-roles.sh"].concat(role ? ["set", role, String(slot)] : ["reset"]))
+    }
     readonly property color accent: c(slotOf("accent"), "#8fd3ff")
     readonly property color accent2: c(slotOf("accent2"), magenta)
     readonly property color ok: c(slotOf("ok"), green)
     readonly property color caution: c(slotOf("caution"), yellow)
     readonly property color info: c(slotOf("info"), cyan)
     readonly property color warn: c(slotOf("warn"), "#e06c75")
-    readonly property color fg: c(7, "#c7c6c2")
-    readonly property color bright: c(15, "#ffffff")
+    // some schemes have text basically the same color as the bg. why
+    readonly property color fg: readable(c(7, "#c7c6c2"))
+    readonly property color bright: readable(c(15, "#ffffff"))
     // based on the text color, color8 is too dark on some schemes
-    readonly property color dim: Qt.rgba(fg.r, fg.g, fg.b, 0.5)
+    readonly property color dim: alpha(fg, 0.5)
     readonly property color bg: wal ? wal.special.background : "#101418"
+
+    // "black" and "white" are the darkest and lightest colors the scheme has, not pure ones
+    readonly property var shades: [bg].concat(Array.from({ length: 16 }, (_, i) => Qt.color(c(i, i < 8 ? "#101418" : "#ffffff"))))
+    readonly property color darkest: shades.reduce((a, b) => lum(b) < lum(a) ? b : a)
+    readonly property color lightest: shades.reduce((a, b) => lum(b) > lum(a) ? b : a)
+    function lum(c) {
+        const f = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+        return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b)
+    }
+    function contrast(a, b) {
+        const x = lum(a), y = lum(b)
+        return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
+    }
+    function against(fill) { return contrast(fill, darkest) >= contrast(fill, lightest) ? darkest : lightest }
+    function readable(c) { c = Qt.color(c); return contrast(c, bg) >= 3 ? c : against(bg) }
+
+    // solid accent looked like a sticker on glass, this sinks it into the panel a bit
+    function soft(c, hot) { return alpha(along([Qt.color(c), bg], hot ? 0.06 : 0.16), hot ? 0.94 : 0.84) }
+    function on(fill) { return against(soft(fill)) }
+    readonly property color ink: on(accent)
     readonly property var spectrum: [blue, cyan, green, yellow, magenta]
 
     function alpha(c, a) {

@@ -5,7 +5,7 @@ local cursor = saved.cursor or defaults.cursor
 
 hl.on("hyprland.start", function()
     if boot.enabled ~= false then
-        hl.exec_cmd("BOOT_BLACK_MS=" .. (boot.black_ms or defaults.boot.black_ms) .. " qs -p ~/.config/hypr/utilities/boot --daemonize")
+        hl.exec_cmd("BOOT_BLACK_MS=" .. (boot.black_ms or defaults.boot.black_ms) .. " qs -p ~/.config/hypr/utilities/boot.qml --daemonize")
     end
     hl.exec_cmd("hyprctl setcursor " .. (cursor.theme or defaults.cursor.theme) .. " " .. (cursor.size or defaults.cursor.size))
     -- portal doesn't survive a relog, restart it

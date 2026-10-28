@@ -28,10 +28,6 @@ ShellRoot {
     readonly property real w: Math.max(0, (t - 0.2) / 0.8)
 
     readonly property color accent: kind === "volume" ? Theme.info : kind === "brightness" ? Theme.caution : hasBar ? Theme.accent : Theme.accent2
-    readonly property color fg: Theme.fg
-    readonly property color bright: Theme.bright
-    readonly property color dim: Theme.dim
-    readonly property color bg: Theme.bg
 
     readonly property bool hasBar: kind === "volume" || kind === "brightness"
     readonly property bool off: kind === "volume" ? flag : false
@@ -175,7 +171,7 @@ ShellRoot {
             Rectangle {
                 anchors.fill: parent
                 radius: Math.max(10, root.dotSize / 2 - (root.dotSize / 2 - 10) * Math.min(1, root.w))
-                color: Qt.rgba(root.bg.r, root.bg.g, root.bg.b, 0.45)
+                color: Theme.alpha(Theme.bg, 0.45)
             }
 
             Label {
@@ -187,7 +183,7 @@ ShellRoot {
                 horizontalAlignment: Text.AlignHCenter
                 text: root.glyph
                 font.pixelSize: 18
-                color: root.off ? root.dim : root.accent
+                color: root.off ? Theme.dim : root.accent
                 rotation: root.wiggle
                 scale: (0.75 + 0.25 * root.stage(0.1)) * (1 + 0.18 * root.pulse)
                 Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
@@ -203,7 +199,7 @@ ShellRoot {
                 horizontalAlignment: Text.AlignRight
                 text: root.readout
                 font.pixelSize: 14
-                color: root.readoutLit ? root.fg : root.dim
+                color: root.readoutLit ? Theme.fg : Theme.dim
                 opacity: root.stage(0.55)
                 transform: Translate { x: 6 * (1 - root.stage(0.55)) }
                 Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
@@ -218,7 +214,7 @@ ShellRoot {
                 anchors.verticalCenter: parent.verticalCenter
                 height: 4
                 radius: 2
-                color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.16)
+                color: Theme.alpha(Theme.fg, 0.16)
                 opacity: root.stage(0.5)
 
                 Rectangle {
@@ -226,7 +222,7 @@ ShellRoot {
                     height: parent.height
                     radius: 2
                     width: parent.width * Math.max(0, Math.min(1, root.shownValue))
-                    color: root.off ? root.dim : root.accent
+                    color: root.off ? Theme.dim : root.accent
                     Behavior on color { ColorAnimation { duration: Theme.ms(90) } }
 
                     Rectangle {
@@ -251,7 +247,7 @@ ShellRoot {
                 text: root.title
                 elide: Text.ElideRight
                 font.pixelSize: 15
-                color: root.fg
+                color: Theme.fg
                 opacity: root.stage(0.5)
                 transform: Translate { x: -6 * (1 - root.stage(0.5)) }
             }

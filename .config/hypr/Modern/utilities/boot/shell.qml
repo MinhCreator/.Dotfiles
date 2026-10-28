@@ -3,20 +3,12 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../common"
 
 ShellRoot {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
-    readonly property string sans: "CodeNewRoman Nerd Font Propo"
-    // same roles as common/Theme.qml, boot can't import it
-    readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
-    readonly property color accent2: wal ? wal.colors.color13 : "#c3a6ff"
-    readonly property color info: wal ? wal.colors.color14 : "#9fe0d0"
-    readonly property color ok: wal ? wal.colors.color10 : "#98c379"
-    readonly property color dim: wal ? wal.colors.color8 : "#716e5d"
-    readonly property color bright: wal ? wal.colors.color15 : "#ffffff"
-    readonly property color ink: wal ? wal.special.background : "#101418"
     readonly property var sourceLabels: [
         "hypr/startup.lua",
         "hypr/shortcuts.lua",
@@ -89,64 +81,14 @@ ShellRoot {
     readonly property real closeT: 1 - exit
     readonly property real closeOpacity: Math.max(0.001, Math.min(1, closeT * 2.5))
 
-    FileView {
-        id: walFile
-        path: root.home + "/.cache/wal/colors.json"
-        watchChanges: true
-        onFileChanged: reload()
-    }
-
-    FileView {
-        id: wallFile
-        path: root.home + "/.cache/wal/wal"
-        watchChanges: true
-        onFileChanged: reload()
-    }
-
-    FileView {
-        id: configFile
-        path: root.home + "/.config/hypr/startup.lua"
-        watchChanges: true
-        onFileChanged: reload()
-    }
-
-    FileView {
-        id: modernConfigFile
-        path: root.home + "/.config/hypr/shortcuts.lua"
-        watchChanges: true
-        onFileChanged: reload()
-    }
-
-    FileView {
-        id: styleFile
-        path: root.home + "/.config/hypr/style.lua"
-        watchChanges: true
-        onFileChanged: reload()
-    }
-
-    FileView {
-        id: waybarFile
-        path: root.home + "/.config/waybar/config"
-        watchChanges: true
-        onFileChanged: reload()
-    }
-
-    FileView {
-        id: bootFile
-        path: root.home + "/.config/hypr/utilities/boot/shell.qml"
-        watchChanges: true
-        onFileChanged: reload()
-    }
+    Watched { id: wallFile; path: root.home + "/.cache/wal/wal" }
+    Watched { id: configFile; path: root.home + "/.config/hypr/startup.lua" }
+    Watched { id: modernConfigFile; path: root.home + "/.config/hypr/shortcuts.lua" }
+    Watched { id: styleFile; path: root.home + "/.config/hypr/style.lua" }
+    Watched { id: waybarFile; path: root.home + "/.config/waybar/config" }
+    Watched { id: bootFile; path: root.home + "/.config/hypr/utilities/boot/shell.qml" }
 
     readonly property string wallPath: wallFile.text().trim()
-    readonly property var wal: {
-        try {
-            return JSON.parse(walFile.text())
-        } catch (e) {
-            return null
-        }
-    }
-
     function phase(start, length) {
         return Math.max(0, Math.min(1, (boot - start) / length))
     }
@@ -324,7 +266,7 @@ ShellRoot {
 
             Rectangle {
                 anchors.fill: parent
-                color: root.ink
+                color: Theme.bg
                 opacity: 0.16 * root.closeT
             }
 
@@ -339,7 +281,7 @@ ShellRoot {
                     radius: width / 2
                     color: "transparent"
                     border.width: 1
-                    border.color: Qt.rgba(root.info.r, root.info.g, root.info.b, 0.16)
+                    border.color: Theme.alpha(Theme.info, 0.16)
                     rotation: root.boot * 18
                 }
 
@@ -350,7 +292,7 @@ ShellRoot {
                     radius: width / 2
                     color: "transparent"
                     border.width: 2
-                    border.color: Qt.rgba(root.accent2.r, root.accent2.g, root.accent2.b, 0.26)
+                    border.color: Theme.alpha(Theme.accent2, 0.26)
                     rotation: -root.boot * 28
                 }
 
@@ -359,17 +301,17 @@ ShellRoot {
                     width: Math.min(parent.width, parent.height) * 0.16
                     height: width
                     radius: width / 2
-                    color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.08)
+                    color: Theme.alpha(Theme.accent, 0.08)
                     border.width: 1
-                    border.color: root.accent
+                    border.color: Theme.accent
                     scale: 0.8 + root.phase(0.2, 0.65) * 0.2
                 }
 
                 Text {
                     anchors.centerIn: parent
                     text: "HYPRLAND"
-                    color: root.bright
-                    font.family: root.sans
+                    color: Theme.bright
+                    font.family: Theme.sans
                     font.pixelSize: Math.max(18, Math.min(parent.width, parent.height) * 0.022)
                     font.letterSpacing: 5
                 }
@@ -378,8 +320,8 @@ ShellRoot {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: parent.height / 2 + Math.min(parent.width, parent.height) * 0.09
                     text: "SESSION / " + (root.boot < 0.82 ? "INITIALIZING" : "READY")
-                    color: root.boot < 0.82 ? root.accent : root.ok
-                    font.family: root.sans
+                    color: root.boot < 0.82 ? Theme.accent : Theme.ok
+                    font.family: Theme.sans
                     font.pixelSize: 11
                     font.letterSpacing: 2
                 }
@@ -395,16 +337,16 @@ ShellRoot {
 
                 Text {
                     text: "BOOTSTRAP // LIVE"
-                    color: root.accent2
-                    font.family: root.sans
+                    color: Theme.accent2
+                    font.family: Theme.sans
                     font.pixelSize: 11
                     font.letterSpacing: 2
                 }
 
                 Text {
                     text: "CAT // " + root.sourceLabel
-                    color: root.dim
-                    font.family: root.sans
+                    color: Theme.dim
+                    font.family: Theme.sans
                     font.pixelSize: 10
                     font.letterSpacing: 1
                 }
@@ -436,8 +378,8 @@ ShellRoot {
                                 : sourceLine
                             return (index === root.codeLineIndex ? "› " : "  ") + content
                         }
-                        color: index === root.codeLineIndex ? root.bright : root.dim
-                        font.family: root.sans
+                        color: index === root.codeLineIndex ? Theme.bright : Theme.dim
+                        font.family: Theme.sans
                         font.pixelSize: 12
                         opacity: index > root.codeLineIndex ? 0 : (index === root.codeLineIndex ? 1 : 0.38)
                         elide: Text.ElideRight
@@ -477,8 +419,8 @@ ShellRoot {
                                 return String(index + 1).padStart(2, "0") + "  "
                                     + (index === root.lowerCodeLineIndex ? "› " : "  ") + content
                             }
-                            color: index === root.lowerCodeLineIndex ? root.bright : root.dim
-                            font.family: root.sans
+                            color: index === root.lowerCodeLineIndex ? Theme.bright : Theme.dim
+                            font.family: Theme.sans
                             font.pixelSize: 12
                             opacity: index > root.lowerCodeLineIndex
                                 ? 0
@@ -497,7 +439,7 @@ ShellRoot {
                 anchors.rightMargin: 56
                 anchors.bottomMargin: 42
                 height: 1
-                color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.28)
+                color: Theme.alpha(Theme.accent, 0.28)
                 opacity: root.closeOpacity * root.phase(0.08, 0.25)
             }
         }

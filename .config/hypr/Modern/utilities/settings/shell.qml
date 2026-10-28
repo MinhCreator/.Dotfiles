@@ -333,7 +333,7 @@ ShellRoot {
                                     height: parent.height
                                     radius: Theme.r(9)
                                     x: tabs.index * (tabs.cell + tabs.gap)
-                                    color: Theme.alpha(Theme.accent, 0.42)
+                                    color: Theme.soft(Theme.accent)
                                     Behavior on x { NumberAnimation { duration: Theme.ms(340); easing.type: Easing.OutCubic } }
                                 }
 
@@ -361,7 +361,7 @@ ShellRoot {
                                             text: tab.modelData.icon
                                             font.pixelSize: 15
                                             scale: tab.on ? 1.12 : 1
-                                            color: tab.on || tabArea.containsMouse ? Theme.bright : Theme.fg
+                                            color: tab.on ? Theme.ink : tabArea.containsMouse ? Theme.bright : Theme.fg
                                             Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
                                             Behavior on color { ColorAnimation { duration: Theme.fast } }
                                         }

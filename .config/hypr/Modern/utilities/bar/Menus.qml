@@ -45,7 +45,7 @@ QtObject {
 
         width: parent ? parent.width : 0
         height: sub !== "" ? 46 : 36
-        color: active ? Theme.alpha(Theme.accent, area.containsMouse ? 0.34 : 0.26)
+        color: active ? Theme.soft(Theme.accent, area.containsMouse)
             : Theme.alpha(Theme.fg, area.containsMouse && enabledRow ? 0.1 : 0)
         opacity: enabledRow ? 1 : 0.45
         Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
@@ -64,7 +64,7 @@ QtObject {
                 visible: row.iconSource === ""
                 text: row.glyph
                 font.pixelSize: 15
-                color: row.active || row.busy ? Theme.accent : Theme.fg
+                color: row.active ? Theme.ink : row.busy ? Theme.accent : Theme.fg
                 Behavior on color { ColorAnimation { duration: Theme.ms(200) } }
             }
 
@@ -120,7 +120,7 @@ QtObject {
                 text: row.label
                 elide: Text.ElideRight
                 font.pixelSize: 13
-                color: row.active || row.hot ? Theme.bright : Theme.fg
+                color: row.active ? Theme.ink : row.hot ? Theme.bright : Theme.fg
             }
             Label {
                 width: parent.width
@@ -128,7 +128,7 @@ QtObject {
                 text: row.sub
                 elide: Text.ElideRight
                 font.pixelSize: 10
-                color: Theme.dim
+                color: row.active ? Theme.alpha(Theme.ink, 0.7) : Theme.dim
             }
         }
 
@@ -139,7 +139,7 @@ QtObject {
             anchors.verticalCenter: parent.verticalCenter
             text: row.trailing
             font.pixelSize: 11
-            color: row.active ? Theme.accent : Theme.dim
+            color: row.active ? Theme.ink : Theme.dim
         }
 
         Hover {
@@ -177,7 +177,7 @@ QtObject {
                     anchors.centerIn: parent
                     text: "\uf013"
                     font.pixelSize: 12
-                    color: cogArea.containsMouse ? Theme.bright : Theme.dim
+                    color: row.active ? Theme.ink : cogArea.containsMouse ? Theme.bright : Theme.dim
                 }
 
                 Hover {
@@ -440,7 +440,7 @@ QtObject {
                 width: label.implicitWidth + 22
                 height: 26
                 radius: Math.min(Theme.rounding, height / 2)
-                color: on ? Theme.alpha(Theme.accent, chipArea.containsMouse ? 0.95 : 0.8)
+                color: on ? Theme.soft(Theme.accent, chipArea.containsMouse)
                     : Theme.alpha(Theme.fg, chipArea.containsMouse ? 0.14 : 0.07)
                 Behavior on color { ColorAnimation { duration: Theme.ms(140) } }
 
@@ -449,7 +449,7 @@ QtObject {
                     anchors.centerIn: parent
                     text: chip.modelData[1]
                     font.pixelSize: 11
-                    color: chip.on ? Theme.bg : Theme.fg
+                    color: chip.on ? Theme.ink : Theme.fg
                 }
 
                 Hover {
@@ -461,13 +461,11 @@ QtObject {
         }
     }
 
-    component Card: Rectangle {
+    component Card: Tile {
         default property alias content: inner.data
         property alias spacing: inner.spacing
         width: parent ? parent.width : 0
         height: inner.implicitHeight + 20
-        radius: Math.min(Theme.rounding, 12)
-        color: Theme.alpha(Theme.fg, 0.055)
 
         Column {
             id: inner
@@ -1631,7 +1629,7 @@ exit 0`, "sh", up ? "up" : "save", uuid, name, sec, kind].concat(kv)
                     width: grid.cell
                     height: grid.cell + 14
                     radius: Math.min(Theme.rounding, 12)
-                    color: armed ? Theme.alpha(Theme.warn, 0.4)
+                    color: armed ? Theme.soft(Theme.warn)
                         : Theme.alpha(Theme.fg, area.containsMouse ? 0.12 : 0.055)
                     scale: area.pressed ? 0.95 : 1
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
@@ -1644,13 +1642,13 @@ exit 0`, "sh", up ? "up" : "save", uuid, name, sec, kind].concat(kv)
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: btn.modelData.glyph
                             font.pixelSize: 20
-                            color: btn.armed ? Theme.bright : area.containsMouse ? Theme.accent : Theme.fg
+                            color: btn.armed ? Theme.on(Theme.warn) : area.containsMouse ? Theme.accent : Theme.fg
                         }
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: btn.armed ? "Again" : btn.modelData.label
                             font.pixelSize: 10
-                            color: btn.armed ? Theme.bright : Theme.dim
+                            color: btn.armed ? Theme.on(Theme.warn) : Theme.dim
                         }
                     }
 
