@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # renames files to <prefix>-NN.<ext>, [--dry-run]
+import os
 import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(os.environ.get("WALLPAPER_LIBRARY", Path.home() / "wallpapers" / "library"))
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
 
 

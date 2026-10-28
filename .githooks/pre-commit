@@ -1,0 +1,9 @@
+#!/bin/bash
+# only favorited wallpapers get committed here, the rest go to the wallpapers repo
+cd "$(git rev-parse --show-toplevel)"
+lib=wallpapers/library
+favs=$(sed "/^$/d; s|^|$lib/|" "$lib/favorites.txt" 2>/dev/null)
+
+git ls-files -- "$lib/*/*" | grep -vxFf <(printf '%s' "$favs") | xargs -r -d '\n' git rm -q --cached --
+while read -r f; do [[ -f $f ]] && git add -f -- "$f"; done <<< "$favs"
+exit 0

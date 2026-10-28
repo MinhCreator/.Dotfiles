@@ -116,6 +116,7 @@ apply_dotfiles() {
     done
     shopt -u nullglob dotglob
 
+    git -C "$DOTFILES_DIR" config core.hooksPath .githooks
     link_entry "$HOME/.config/hypr/utilities/pypr.py" "$HOME/.local/bin/pypr" "$backup/.local/bin"
 
     if [[ -n "$HYPRLAND_STYLE_DIR" ]]; then
@@ -133,7 +134,13 @@ apply_dotfiles() {
 }
 
 run_wallpaper_selector() {
-    local script="$HOME/.config/hypr/utilities/shells.sh"
+    local script="$HOME/.config/hypr/utilities/shells.sh" choice
+
+    # dotfiles only ship the favorites, the full library is its own repo
+    read -rp "Pull the full wallpaper library? (Y/n): " choice
+    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
+        "$HOME/.config/hypr/utilities/wallpapers.sh" install || warn "Couldn't pull wallpapers, sticking with the defaults."
+    fi
 
     if [[ -x "$script" ]]; then
         section "Selecting Wallpaper"

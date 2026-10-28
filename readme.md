@@ -161,6 +161,8 @@ Every screenshot below is shown three times, once for each of my saved profiles:
 
 - **`Alt+W`** to open it.
 - Scroll through your wallpapers in `~/wallpapers/library`. Picking one updates the `Pywal` colors for everything.
+- Only my favorites ship with the dotfiles. The full library is in [elifouts/wallpapers](https://github.com/elifouts/wallpapers) ([browse and download](https://www.elifouts.net/wallpapers/)). The installer asks if you want it, or run `wallpapers.sh install` later.
+- `wallpapers.sh pull` / `push` keeps the library synced, `dev-pull` grabs everything including the archive.
 </details>
 
 <details>
