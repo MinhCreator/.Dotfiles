@@ -97,7 +97,7 @@ install_config() {
 
 # style.css needs colors-waybar.css or waybar won't style anything
 ensure_palette() {
-    local css="$HOME/.cache/wal/colors-waybar.css" wallpaper="$REPO/wallpapers/pywallpaper.jpg"
+    local css="$HOME/.cache/wal/colors-waybar.css" wallpaper="$HOME/wallpapers/pywallpaper.jpg"
 
     [[ -f "$css" ]] && { success "Using your existing pywal palette."; return; }
 

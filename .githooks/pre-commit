@@ -1,9 +1,13 @@
 #!/bin/bash
-# only favorited wallpapers get committed here, the rest go to the wallpapers repo
+# copies whatever is favorited in ~/wallpapers/library into the dotfiles, those are the defaults
+# everything else only lives in the wallpapers repo
 cd "$(git rev-parse --show-toplevel)"
-lib=wallpapers/library
-favs=$(sed "/^$/d; s|^|$lib/|" "$lib/favorites.txt" 2>/dev/null)
+src="${WALLPAPER_LIBRARY:-$HOME/wallpapers/library}" dst=wallpapers/library
+[[ -f $src/favorites.txt ]] || exit 0
 
-git ls-files -- "$lib/*/*" | grep -vxFf <(printf '%s' "$favs") | xargs -r -d '\n' git rm -q --cached --
-while read -r f; do [[ -f $f ]] && git add -f -- "$f"; done <<< "$favs"
-exit 0
+mkdir -p "$dst"
+cp "$src/favorites.txt" "$dst/"
+find "$dst" -mindepth 2 -type f | sed "s|^$dst/||" | grep -vxFf "$dst/favorites.txt" | sed "s|^|$dst/|" | xargs -r -d '\n' rm --
+while read -r f; do [[ -f $src/$f ]] && install -CDm644 "$src/$f" "$dst/$f"; done < "$dst/favorites.txt"
+find "$dst" -mindepth 1 -type d -empty -delete
+git add -A "$dst"

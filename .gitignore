@@ -29,7 +29,3 @@ __pycache__/
 .config/cava/themes/
 .config/cava/config
 .config/kitty/current-theme.conf
-wallpapers/pywallpaper.jpg
-wallpapers/library/*/
-wallpapers/archive/
-wallpapers/library/README.md

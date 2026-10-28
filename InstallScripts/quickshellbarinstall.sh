@@ -95,7 +95,7 @@ install_config() {
 }
 
 ensure_palette() {
-    local json="$HOME/.cache/wal/colors.json" wallpaper="$REPO/wallpapers/pywallpaper.jpg"
+    local json="$HOME/.cache/wal/colors.json" wallpaper="$HOME/wallpapers/pywallpaper.jpg"
 
     [[ -f "$json" ]] && { success "Using your existing pywal palette."; return; }
 

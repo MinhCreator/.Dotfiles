@@ -111,10 +111,13 @@ apply_dotfiles() {
     for entry in "$src"/*; do
         link_entry "$entry" "$HOME/.config/${entry##*/}" "$backup/.config"
     done
-    for name in wallpapers .bashrc; do
-        [[ -e "$DOTFILES_DIR/$name" ]] && link_entry "$DOTFILES_DIR/$name" "$HOME/$name" "$backup"
-    done
+    link_entry "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc" "$backup"
     shopt -u nullglob dotglob
+
+    # ~/wallpapers used to link into here, now it's a real folder seeded with the favorites
+    [[ -L "$HOME/wallpapers" ]] && rm "$HOME/wallpapers"
+    mkdir -p "$HOME/wallpapers/library"
+    cp -rn "$DOTFILES_DIR/wallpapers/library/." "$HOME/wallpapers/library/"
 
     git -C "$DOTFILES_DIR" config core.hooksPath .githooks
     link_entry "$HOME/.config/hypr/utilities/pypr.py" "$HOME/.local/bin/pypr" "$backup/.local/bin"
