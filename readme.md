@@ -53,7 +53,7 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
   <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/images/v2/profiles.gif" width="70%">
 </p>
 
-# Install Updating & Uninstalling
+# Install / Updating
 
 Install
 
