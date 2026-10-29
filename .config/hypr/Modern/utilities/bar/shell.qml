@@ -68,9 +68,12 @@ ShellRoot {
                 run("sleep 0.3; p=~/.config/waybar/scripts/colorpicker.sh; [ -x \"$p\" ] || p='" + Quickshell.shellDir + "/colorpicker.sh'; \"$p\"")
             }
 
-            function open(page, tab) {
+            function pillFor(page) {
                 const w = windows[Hyprland.focusedMonitor?.name ?? ""]
-                const p = w ? w.pills.find(p => p.visible && p.has(page)) : null
+                return w ? w.pills.find(p => p.visible && p.has(page)) ?? null : null
+            }
+            function open(page, tab) {
+                const p = pillFor(page)
                 if (!p) return
                 if (tab) { p.show(page); p.tab = tab }
                 else p.toggle(page)
@@ -88,8 +91,13 @@ ShellRoot {
 
             Island.Countdown {
                 id: countdown
-                onFinished: root.run("notify-send -a 'Focus timer' -i alarm-symbolic 'Time is up' " +
-                                     "'Your " + Math.round(total / 60) + " minute session has finished.'")
+                // notification only if there's no pill to ring out of
+                onFinished: {
+                    const p = root.pillFor("alarm")
+                    if (p) p.show("alarm")
+                    else root.run("notify-send -a 'Focus timer' -i alarm-symbolic 'Time is up' " +
+                                  "'Your " + words(total) + " session has finished.'")
+                }
             }
             readonly property alias timer: countdown
 

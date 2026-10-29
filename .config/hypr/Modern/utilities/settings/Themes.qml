@@ -76,11 +76,14 @@ Item {
     Component.onCompleted: { sync(); Store.picker = tp }
     Component.onDestruction: if (Store.picker === tp) Store.picker = null
 
-    function create() {
+    // blank, or a copy of e to edit. your own themes save over themselves unless you hit save as new
+    property string editing: ""
+    function create(e) {
         instant = true
-        draft = Array(16).fill("")
+        draft = e ? e.palette.slice(0, 16) : Array(16).fill("")
         jumble.restart()
-        draftName = ""
+        draftName = e ? (e.custom ? e.name : e.name + " copy") : ""
+        editing = e && e.custom ? e.id : ""
         slot = 0
     }
     function setSlot(c) {
@@ -97,12 +100,15 @@ Item {
     }
 
     // can't save with holes, jumps to the first empty one instead
-    function save() {
+    function save(asNew) {
         const empty = draft.indexOf("")
         if (empty >= 0) { slot = empty; return }
         const name = draftName.trim() || "Custom"
-        const id = (Qt.color(draft[0]).hslLightness > 0.5 ? "light/" : "dark/")
+        const base = (Qt.color(draft[0]).hslLightness > 0.5 ? "light/" : "dark/")
             + (name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "custom")
+        const over = editing !== "" && !asNew
+        let id = over ? editing : base
+        for (let n = 2; !over && entries.some(e => e.id === id); n++) id = base + "-" + n
         const colors = {}
         draft.forEach((c, i) => colors["color" + i] = c)
         run(id, ["sh", "-c", 'mkdir -p "$(dirname "$1")" && printf "%s" "$2" > "$1"', "sh", file(id),
@@ -329,15 +335,21 @@ Item {
                     font.pixelSize: 12
                     color: row.on ? Theme.ink : row.index === tp.cur ? Theme.bright : Theme.fg
                 }
-                IconButton {
-                    visible: !!row.modelData.custom && (rowArea.containsMouse || hovered)
+                Row {
+                    visible: rowArea.containsMouse || editBtn.hovered || rmBtn.hovered
                     anchors.right: swatches.left
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "rm"
-                    font.pixelSize: 10
-                    hot: Theme.warn
-                    onClicked: tp.remove(row.modelData)
+                    spacing: 12
+                    IconButton { id: editBtn; text: "edit"; font.pixelSize: 10; onClicked: tp.create(row.modelData) }
+                    IconButton {
+                        id: rmBtn
+                        visible: !!row.modelData.custom
+                        text: "rm"
+                        font.pixelSize: 10
+                        hot: Theme.warn
+                        onClicked: tp.remove(row.modelData)
+                    }
                 }
                 Row {
                     id: swatches
@@ -474,6 +486,7 @@ Item {
                 anchors.right: parent.right
                 spacing: 18
                 IconButton { text: "esc cancel"; font.pixelSize: 12; onClicked: tp.draft = null }
+                IconButton { visible: tp.editing !== ""; text: "save as new"; font.pixelSize: 12; onClicked: tp.save(true) }
                 IconButton { text: "↵ save"; font.pixelSize: 12; idle: Theme.accent; hot: Theme.bright; onClicked: tp.save() }
             }
         }

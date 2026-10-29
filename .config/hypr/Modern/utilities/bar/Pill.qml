@@ -22,7 +22,8 @@ Item {
     readonly property var opens: ({ workspaces: "workspaces", media: "island", date: "island", constdate: "island", timer: "island",
         clock: "island", tray: "tray", network: "network", audio: "audio", power: "power" })
     function has(page) {
-        return modules.some(m => opens[m] === page)
+        // alarm rings out of whichever pill has the island
+        return modules.some(m => opens[m] === (page === "alarm" ? "island" : page))
     }
 
     function dividerOn(i) {
@@ -32,8 +33,8 @@ Item {
         for (let j = i + 1; j < modules.length && modules[j] !== "|"; j++) after = after || showing(j)
         return before && after
     }
-    readonly property var widths: ({ workspaces: 600, island: 600, network: 350, audio: 340, power: 330, tray: 290 })
-    readonly property var widest: ({ workspaces: 900, island: 900, network: 720, audio: 720, power: 420, tray: 360 })
+    readonly property var widths: ({ workspaces: 600, island: 600, network: 350, audio: 340, power: 330, tray: 290, alarm: 300 })
+    readonly property var widest: ({ workspaces: 900, island: 900, network: 720, audio: 720, power: 420, tray: 360, alarm: 340 })
     readonly property int pad: 16
 
     property string page: ""
@@ -287,7 +288,7 @@ Item {
         transform: Translate { y: (1 - slot.f) * 8 }
         Rise { target: slot.item }
         active: page !== ""
-        sourceComponent: ({ workspaces: workspacesC, island: islandC, network: networkC, audio: audioC, power: powerC, tray: trayC })[page] ?? null
+        sourceComponent: ({ workspaces: workspacesC, island: islandC, network: networkC, audio: audioC, power: powerC, tray: trayC, alarm: alarmC })[page] ?? null
     }
 
     Component { id: workspacesC; Workspaces.Page { expose: self.ctx.expose; screen: self.screen; onPicked: self.close(); onOverview: self.ctx.toggleOverview() } }
@@ -295,5 +296,6 @@ Item {
     Component { id: networkC; Menus.Network { open: self.open; onRun: c => self.ctx.run(c) } }
     Component { id: audioC; Menus.Audio { open: self.open; onRun: c => self.ctx.run(c); onDone: self.close() } }
     Component { id: powerC; Menus.Session { open: self.open; standalone: self.ctx.standalone; onRun: c => self.ctx.run(c); onDone: self.close() } }
+    Component { id: alarmC; Alarm { open: self.open && self.page === "alarm"; length: self.ctx.timer.words(self.ctx.timer.total); onDone: self.close() } }
     Component { id: trayC; Menus.Tray { open: self.open; item: parent ? parent.tray : null; onRun: c => self.ctx.run(c); onDone: self.close() } }
 }

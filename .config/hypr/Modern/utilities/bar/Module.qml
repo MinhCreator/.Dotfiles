@@ -6,7 +6,6 @@ import Quickshell.Networking
 import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
 import "../common"
-import Quickshell.Io
 
 Item {
     id: mod
@@ -537,49 +536,14 @@ Item {
     component Wave: Row {
         id: wave
         property bool playing: false
-        property var levels: []
         readonly property int bars: 10
 
         spacing: 2
 
-        Process {
-            running: wave.playing
-
-            command: [
-                "cava",
-                "-p",
-                decodeURIComponent(
-                    Qt.resolvedUrl("../music/cava.conf")
-                        .toString()
-                        .replace(/^file:\/\//, "")
-                )
-            ]
-
-            stdout: SplitParser {
-                onRead: line => {
-                    const parts = line.trim().split(";")
-
-                    if (parts.length < wave.bars)
-                        return
-
-                    const out = new Array(wave.bars)
-
-                    for (let i = 0; i < wave.bars; i++) {
-                        out[i] = Math.max(
-                            0,
-                            Math.min(1, (parseInt(parts[i]) || 0) / 1000)
-                        )
-                    }
-
-                    wave.levels = out
-                }
-            }
-
-            onRunningChanged: {
-                if (!running)
-                    wave.levels = []
-            }
-        }
+        // shared cava, both monitors' bars used to each run their own
+        onPlayingChanged: Cava.users += playing ? 1 : -1
+        Component.onCompleted: if (playing) Cava.users++
+        Component.onDestruction: if (playing) Cava.users--
 
         Repeater {
             model: wave.bars
@@ -588,7 +552,7 @@ Item {
                 required property int index
 
                 readonly property real level:
-                    wave.playing ? (wave.levels[index] || 0) : 0
+                    wave.playing ? (Cava.levels[index] || 0) : 0
 
                 // even pixel heights so bars don't flicker
                 readonly property real targetHeight:
@@ -606,18 +570,7 @@ Item {
 
                 opacity: wave.playing ? 0.35 + 0.65 * level : 0.45
 
-                Behavior on height {
-                    NumberAnimation {
-                        duration: 100
-                        easing.type: Easing.OutQuad
-                    }
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 100
-                    }
-                }
+                // no Behaviors here, they never settled so the 240hz screen redrew nonstop and the gpu sat at ~55W
             }
         }
     }

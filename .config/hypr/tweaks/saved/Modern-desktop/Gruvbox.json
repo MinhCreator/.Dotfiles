@@ -24,7 +24,10 @@
     "decoration": {
       "active_opacity": 0.9,
       "blur": {
-        "enabled": true
+        "enabled": true,
+        "passes": 4,
+        "size": 3,
+        "vibrancy": 0.2
       },
       "dim_inactive": true,
       "dim_strength": 0.1,
@@ -35,7 +38,7 @@
       "motion_blur": {
         "enabled": false
       },
-      "rounding": 14,
+      "rounding": 7,
       "rounding_power": 5,
       "shadow": {
         "enabled": true,
@@ -76,7 +79,7 @@
     "animations": false
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/industrial/ind-15.jpg"
+    "path": "/home/$USER/wallpapers/library/gruvbox/gru-04.jpg"
   },
   "waybar": {
     "style": "default"

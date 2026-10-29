@@ -12,14 +12,14 @@
     "workspace": "slide"
   },
   "bar": {
-    "kind": "waybar"
+    "kind": "quickshell"
   },
   "colors": {
-    "theme": "dark/gruvbox"
+    "theme": "dark/pywal-copy"
   },
   "config": {
     "animations": {
-      "enabled": true
+      "enabled": false
     },
     "decoration": {
       "active_opacity": 1,
@@ -38,7 +38,7 @@
         "enabled": false
       },
       "inactive_opacity": 1,
-      "rounding": 3,
+      "rounding": 0,
       "rounding_power": 5,
       "shadow": {
         "enabled": true,
@@ -63,13 +63,17 @@
       }
     }
   },
+  "hyprglass": {
+    "layers": false,
+    "quickshell": false
+  },
   "quickshell": {
     "style": "full"
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/abstract/abs-08.jpg"
+    "path": "/home/$USER/wallpapers/library/gruvbox/gru-01.jpg"
   },
   "waybar": {
-    "style": "line"
+    "style": "default"
   }
 }

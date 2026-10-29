@@ -1,7 +1,7 @@
 {
   "Modern/desktop": {
     "bar": {
-      "kind": "quickshell"
+      "kind": "waybar"
     },
     "colors": {
       "theme": "pywal"
@@ -10,7 +10,7 @@
       "style": "experimental"
     },
     "wallpaper": {
-      "path": "/home/$USER/wallpapers/library/sunset/sun-17.jpg"
+      "path": "/home/$USER/wallpapers/library/nature/nat-09.jpg"
     },
     "waybar": {
       "style": "default"

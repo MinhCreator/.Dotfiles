@@ -471,11 +471,21 @@ Item {
 
         property var timer
 
+        // drag the ring. each lap is the next unit: 0-60 sec, 1-60 min, 1-8 hr
+        function toTurns(s) { return s <= 60 ? s / 60 : s <= 3600 ? 1 + (s / 60 - 1) / 59 : 2 + (s / 60 - 60) / 420 }
+        function fromTurns(u) {
+            return Math.max(1, u < 1 ? Math.round(u * 60) : u < 2 ? 60 * (1 + Math.round((u - 1) * 59)) : 60 * (60 + 5 * Math.round((u - 2) * 84)))
+        }
+        function nudge(d) { if (!timer.running) timer.set(fromTurns(Math.max(0, Math.min(3, toTurns(timer.total) + d)))) }
+        readonly property real turns: toTurns(timer.total)
+        readonly property real lap: turns % 1 || (turns > 0 ? 1 : 0)
+        readonly property real sweep: timer.active ? timer.frac : lap
+
         Item {
             id: dial
             width: 150
             height: 150
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.centerIn: parent
 
             Shape {
                 anchors.fill: parent
@@ -498,10 +508,23 @@ Item {
                         radiusX: 68
                         radiusY: 68
                         startAngle: -90
-                        sweepAngle: 360 * page.timer.frac
-                        Behavior on sweepAngle { NumberAnimation { duration: Theme.ms(300) } }
+                        sweepAngle: 360 * page.sweep
+                        Behavior on sweepAngle { enabled: !spin.pressed; NumberAnimation { duration: Theme.ms(300) } }
                     }
                 }
+            }
+
+            // knob at the end of the arc so it looks grabbable
+            Rectangle {
+                readonly property real a: (page.sweep * 360 - 90) * Math.PI / 180
+                visible: !page.timer.running
+                x: 75 + 68 * Math.cos(a) - width / 2
+                y: 75 + 68 * Math.sin(a) - height / 2
+                width: spin.pressed ? 16 : 13
+                height: width
+                radius: width / 2
+                color: Theme.bright
+                Behavior on width { NumberAnimation { duration: Theme.fast } }
             }
 
             Column {
@@ -514,79 +537,65 @@ Item {
                     font.bold: true
                     color: Theme.bright
                 }
-                Label {
+                // which lap you're on: sec, min, hr
+                Row {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: page.timer.running ? "Focusing" : page.timer.active ? "Paused" : "Ready"
-                    font.pixelSize: 11
-                    color: page.timer.running ? Theme.accent2 : page.timer.active ? Theme.caution : Theme.dim
-                }
-            }
-        }
-
-        Column {
-            anchors.left: dial.right
-            anchors.leftMargin: 24
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 14
-
-            Label {
-                x: 2
-                text: "START A SESSION"
-                font.pixelSize: 10
-                font.letterSpacing: 1.6
-                color: Theme.dim
-            }
-
-            Grid {
-                id: presets
-                columns: 3
-                spacing: 6
-                readonly property real cell: (parent.width - spacing * 2) / 3
-
-                Repeater {
-                    model: [5, 15, 25, 30, 45, 60]
-                    Rectangle {
-                        required property int modelData
-                        readonly property bool current: page.timer.total === modelData * 60
-                        width: presets.cell
-                        height: 30
-                        radius: Math.min(Theme.rounding, 10)
-                        color: current && page.timer.active ? Theme.soft(Theme.accent2)
-                            : Theme.alpha(Theme.fg, presetArea.containsMouse ? 0.12 : 0.055)
-                        Behavior on color { ColorAnimation { duration: Theme.fast } }
-                        Label {
-                            anchors.centerIn: parent
-                            text: parent.modelData + " min"
-                            font.pixelSize: 12
-                            color: parent.current && page.timer.active ? Theme.on(Theme.accent2) : Theme.fg
-                        }
-                        Hover {
-                            id: presetArea
-                            anchors.fill: parent
-                            onClicked: page.timer.start(parent.modelData)
+                    spacing: 5
+                    Repeater {
+                        model: 3
+                        Rectangle {
+                            required property int index
+                            readonly property bool on: index === Math.min(2, Math.ceil(page.turns) - 1)
+                            width: on ? 14 : 5
+                            height: 5
+                            radius: 2.5
+                            color: on ? (page.timer.running ? Theme.accent2 : Theme.caution) : Theme.alpha(Theme.fg, 0.2)
+                            Behavior on width { Settle { duration: Theme.fast } }
+                            Behavior on color { ColorAnimation { duration: Theme.fast } }
                         }
                     }
                 }
             }
 
-            Row {
-                spacing: 6
-
-                Button {
-                    primary: true
-                    label: page.timer.running ? "  Pause" : page.timer.active ? "  Resume" : "  Start"
-                    onPressed: page.timer.toggle()
+            // tracks angle change so going past 12 keeps counting into the next lap
+            MouseArea {
+                id: spin
+                property real last: 0
+                // unrounded while dragging, or slow drags round back to the same step and it feels stuck
+                property real u: 0
+                anchors.fill: parent
+                enabled: !page.timer.running
+                cursorShape: Qt.PointingHandCursor
+                function angle(m) { return Math.atan2(m.y - 75, m.x - 75) * 180 / Math.PI }
+                onPressed: m => { last = angle(m); u = page.turns }
+                onPositionChanged: m => {
+                    const a = angle(m)
+                    u = Math.max(0, Math.min(3, u + ((a - last + 540) % 360 - 180) / 360))
+                    last = a
+                    page.timer.set(page.fromTurns(u))
                 }
-                Button {
-                    label: "  Reset"
-                    onPressed: page.timer.reset()
-                }
-                Button {
-                    label: "+5"
-                    onPressed: page.timer.add(5)
-                }
+                onWheel: w => page.nudge(w.angleDelta.y / 120 / 60)
             }
+        }
+
+        Button {
+            anchors.right: dial.left
+            anchors.rightMargin: 28
+            anchors.verticalCenter: dial.verticalCenter
+            width: 34
+            height: 34
+            label: "󰑓"
+            onPressed: page.timer.reset()
+        }
+        Button {
+            anchors.left: dial.right
+            anchors.leftMargin: 28
+            anchors.verticalCenter: dial.verticalCenter
+            width: 34
+            height: 34
+            primary: true
+            label: page.timer.running ? "󰏤" : "󰐊"
+            onPressed: page.timer.toggle()
         }
     }
 
@@ -1233,10 +1242,10 @@ Item {
         readonly property real frac: total > 0 ? remaining / total : 0
         signal finished()
 
-        function start(minutes) {
-            total = Math.round(minutes * 60)
-            remaining = total
-            resume()
+        function set(s) {
+            running = false
+            total = s
+            remaining = s
         }
 
         function resume() {
@@ -1259,18 +1268,20 @@ Item {
             remaining = total
         }
 
-        function add(minutes) {
-            total += minutes * 60
-            if (running) endsAt += minutes * 60000
-            remaining += minutes * 60
-        }
-
         function tick() {
             remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
             if (remaining === 0 && running) {
                 running = false
+                // back to full so the bar chip hides
+                remaining = total
                 finished()
             }
+        }
+
+        // "1 hour 5 minute", for the alarm text
+        function words(s) {
+            const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60
+            return [h && h + " hour", m && m + " minute", r && r + " second"].filter(Boolean).join(" ")
         }
 
         function format(s) {

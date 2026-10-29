@@ -1,6 +1,4 @@
 import QtQuick
-import Quickshell
-import Quickshell.Io
 import "../common"
 
 Item {
@@ -8,8 +6,7 @@ Item {
 
     property bool running: false
     property real intro: 1
-    readonly property int bars: 36
-    property var levels: []
+    readonly property int bars: Cava.bars
 
     readonly property real gap: Math.max(2, Math.round(width / bars * 0.32))
     readonly property real barW: (width - gap * (bars - 1)) / bars
@@ -40,19 +37,12 @@ Item {
     function sweep(p, i) { return Math.max(0, Math.min(1, (p - 0.55 * dist(i)) / 0.45)) }
     function backOut(x) { const c = 2.2; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2) }
 
-    Process {
-        running: viz.running
-        command: ["cava", "-p", decodeURIComponent(Qt.resolvedUrl("cava.conf").toString().replace(/^file:\/\//, ""))]
-        stdout: SplitParser {
-            onRead: line => {
-                const parts = line.split(";")
-                const out = new Array(viz.bars)
-                for (let i = 0; i < viz.bars; i++) out[i] = Math.min(1, (parseInt(parts[i]) || 0) / 1000)
-                viz.levels = out
-                if (!viz.ready) { viz.ready = true; liveAnim.restart() }
-            }
-        }
-        onRunningChanged: if (!running) { viz.levels = []; viz.ready = false; liveAnim.stop(); viz.live = 0 }
+    onRunningChanged: { Cava.users += running ? 1 : -1; if (!running) { ready = false; liveAnim.stop(); live = 0 } }
+    Component.onCompleted: if (running) Cava.users++
+    Component.onDestruction: if (running) Cava.users--
+    Connections {
+        target: Cava
+        function onLevelsChanged() { if (viz.running && !viz.ready && Cava.levels.length) { viz.ready = true; liveAnim.restart() } }
     }
 
     Repeater {
@@ -64,7 +54,7 @@ Item {
             readonly property real pop: viz.backOut(viz.sweep(viz.intro, index))
             readonly property real handoff: viz.sweep(viz.live, index)
             readonly property real ripple: 0.12 + 0.18 * (0.5 + 0.5 * Math.sin(viz.phase - viz.dist(index) * Math.PI * 2))
-            readonly property real level: ripple * (1 - handoff) + (viz.levels[index] || 0) * handoff
+            readonly property real level: ripple * (1 - handoff) + (Cava.levels[index] || 0) * handoff
             x: index * (viz.barW + viz.gap)
             anchors.bottom: parent.bottom
             width: viz.barW

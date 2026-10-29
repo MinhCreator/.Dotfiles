@@ -14,6 +14,9 @@
   "bar": {
     "kind": "quickshell"
   },
+  "colors": {
+    "theme": "pywal"
+  },
   "config": {
     "decoration": {
       "active_opacity": 1,
@@ -61,7 +64,7 @@
     "style": "zen"
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/abstract/abs-09.jpg"
+    "path": "/home/$USER/wallpapers/library/catppuccin/cat-12.png"
   },
   "waybar": {
     "style": "default"
