@@ -161,8 +161,7 @@ ShellRoot {
         color: Theme.bright
     }
 
-    // qt drags stay inside one surface but the pointer keeps reporting to the pressed one,
-    // so that side follows it and, past its edge, has the monitor under it run the same drag
+    // qt drags can't leave their surface, so past the edge the monitor under the pointer takes over. took me a while
     property var guest: null
 
     function viewAt(gx, gy) {

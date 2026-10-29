@@ -65,7 +65,6 @@ return {
             pcall(vim.cmd, "AlphaRedraw")
         end
 
-        -- header
         local opts = applyColors({
             [[███████╗    ██████╗ ]],
             [[██╔════╝    ██╔═══╝ ]],
@@ -90,7 +89,6 @@ return {
             [[d  d  d  e  e  e    ]],
         })
 
-        -- buttons
         dashboard.section.buttons.val = {
             dashboard.button("e", "  > New file", ":ene <BAR> startinsert <CR>"),
             dashboard.button("f", "󰱼  > Find file", ":lua require('telescope.builtin').find_files({ hidden = true, no_ignore = true })<CR>"),
@@ -102,7 +100,6 @@ return {
             dashboard.button("q", "  > Quit", ":qa<CR>"),
         }
 
-        -- footer
         dashboard.section.footer.val = { "", "Welcome!" }
 
         require("alpha").setup(opts)

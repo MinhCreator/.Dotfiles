@@ -10,6 +10,8 @@ from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape
 
 RUN = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+# fixed so the firewall lets the tv back in, the installers open these
+RTSP, SSDP, HTTP = 7236, 7238, 7240
 STATE = os.path.join(RUN, "cast-state")
 
 
@@ -69,6 +71,10 @@ def describe(loc):
 def renderers():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+    try:
+        s.bind(("0.0.0.0", SSDP))
+    except OSError:
+        pass  # taken, random port is fine without a firewall i think
     s.settimeout(0.4)
     msgs = [("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\n"
              f"ST: {st}\r\n\r\n").encode() for st in ("urn:schemas-upnp-org:device:MediaRenderer:1",
@@ -180,7 +186,10 @@ class Server(ThreadingHTTPServer):
     daemon_threads = True
 
     def __init__(self, d, args):
-        super().__init__(("0.0.0.0", 0), Serve)
+        try:
+            super().__init__(("0.0.0.0", HTTP), Serve)
+        except OSError:
+            super().__init__(("0.0.0.0", 0), Serve)
         self.dir, self.args, self.procs = d, args, []
         self.watching, self.seen, self.idle = 0, False, time.time()
 
@@ -334,7 +343,7 @@ class Miracast:
         self.sid, self.name, self.seq, self.buf = os.urandom(16), socket.gethostname(), 0, b""
         self.c = self.ctl = None
         try:
-            self.ls = socket.create_server(("0.0.0.0", 7236))
+            self.ls = socket.create_server(("0.0.0.0", RTSP))
         except OSError:
             self.ls = socket.create_server(("0.0.0.0", 0))
         host, port = target.rsplit(":", 1)
@@ -344,7 +353,7 @@ class Miracast:
         try:
             self.c = self.ls.accept()[0]
         except socket.timeout:
-            raise TimeoutError("tv never called back") from None
+            raise TimeoutError("tv never called back, a firewall is probably blocking 7236. InstallScripts/apply.sh opens it") from None
         self.c.settimeout(20)
         self.host, self.me = self.c.getpeername()[0], self.c.getsockname()[0]
 

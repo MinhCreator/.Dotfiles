@@ -27,7 +27,7 @@ return {
         preset = "modern",
         delay = 150,
         spec = {
-            { "<leader>a", group = "AI (Copilot)" },
+            { "<leader>a", group = "AI (Claude)" },
             { "<leader>f", group = "Find (Telescope)" },
             { "<leader>l", group = "LSP" },
             { "<leader>g", group = "Git" },
@@ -72,54 +72,6 @@ return {
                 require("which-key").show({ global = false })
             end,
             desc = "Buffer Local Keymaps (which-key)",
-        },
-        {
-            "<leader>ap",
-            function()
-                local ok, chat = pcall(require, "CopilotChat")
-                if not ok then
-                    return
-                end
-                local previous = vim.opt.splitright:get()
-                vim.opt.splitright = true
-                chat.toggle()
-                vim.opt.splitright = previous
-            end,
-            desc = "CopilotChat: Toggle Right Panel",
-        },
-        {
-            "<leader>ao",
-            function()
-                local ok, chat = pcall(require, "CopilotChat")
-                if not ok then
-                    return
-                end
-                local previous = vim.opt.splitright:get()
-                vim.opt.splitright = true
-                chat.open()
-                vim.opt.splitright = previous
-            end,
-            desc = "CopilotChat: Open Right Panel",
-        },
-        {
-            "<leader>ac",
-            "<cmd>CopilotChatClose<CR>",
-            desc = "CopilotChat: Close Panel",
-        },
-        {
-            "<leader>ar",
-            "<cmd>CopilotChatReset<CR>",
-            desc = "CopilotChat: Reset Chat",
-        },
-        {
-            "<leader>as",
-            "<cmd>CopilotChatStop<CR>",
-            desc = "CopilotChat: Stop Response",
-        },
-        {
-            "<leader>aa",
-            "<cmd>Copilot auth<CR>",
-            desc = "Copilot: Authenticate",
         },
         {
             "<leader>utp",

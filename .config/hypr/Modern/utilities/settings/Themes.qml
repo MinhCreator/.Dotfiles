@@ -3,21 +3,18 @@ import Quickshell
 import Quickshell.Io
 import "../common"
 
-// color themes, shown as a lil terminal cause it looked cool. hover a row to preview, click to apply.
-// new theme starts with 16 empty slots, each one says what goes there. pick a slot, set it (hex, sliders or the eyedropper), name it, save
+// color themes as a lil fake terminal cause it looked cool
 Item {
     id: tp
 
-    // a palette is color0-15 then background, foreground, cursor, same order as the scheme files.
-    // the preview colors stuff by what quickshell actually uses it for (see common/Theme.qml):
-    // color7 text, color15 bright, color8 comments, the accent is whatever slot the role row below points at
+    // color0-15 then bg, fg, cursor, same order as the scheme files
     readonly property var entries: {
         const p = Store.pywalPalette
         const pywal = p.length >= 16 ? [{ id: "pywal", name: "Pywal", palette: full(p.slice(0, 16)) }] : []
         return pywal.concat(Store.themes)
     }
     readonly property var slotNames: Array.from({ length: 16 }, (_, i) => "color" + i)
-    // what each slot is for, the usual terminal scheme layout. short one goes under the swatch, long one in the hex box
+    // what each slot is for. short one under the swatch, long one in the hex box
     readonly property var hints: [["bg", "background, darkest"], ["red", "red, errors"], ["green", "green, strings"],
         ["yellow", "yellow, warnings"], ["blue", "blue, functions"], ["magenta", "magenta, keywords"], ["cyan", "cyan, info"],
         ["text", "text, light gray"], ["dim", "comments, dim gray"], ["accent", "accent, warm red/orange"], ["green+", "bright green"],
@@ -42,7 +39,7 @@ Item {
     // follows hyprland's rounding so it matches everything else
     readonly property real r: Math.min(Theme.rounding, 10)
 
-    // every color eases from wherever it was so the hex values count up/down. edits skip it or the sliders feel laggy
+    // colors ease over so the hex digits roll. skipped while editing or the sliders lag
     property var from: []
     property var to: []
     property real k: 1
@@ -181,7 +178,6 @@ Item {
         anchors.margins: Theme.pad
         spacing: 14
 
-        // the fake terminal
         Rectangle {
             id: term
             width: parent.width
@@ -214,7 +210,6 @@ Item {
                         + tp.t("}") + " " + tp.c(18, "▌")
                 }
 
-                // open/close the bright row
                 Item {
                     width: parent.width
                     height: 46
@@ -276,7 +271,6 @@ Item {
             }
         }
 
-        // one row per theme
         ListView {
             id: list
             visible: !tp.draft
@@ -406,7 +400,6 @@ Item {
             Rise { target: add; index: 3; replay: Store.opened }
         }
 
-        // new theme mode
         Column {
             visible: !!tp.draft
             width: parent.width
@@ -441,7 +434,6 @@ Item {
             }
 
             Repeater {
-                // hue / sat / light of the picked color
                 model: [["hue", "hslHue"], ["sat", "hslSaturation"], ["light", "hslLightness"]]
                 Row {
                     required property var modelData

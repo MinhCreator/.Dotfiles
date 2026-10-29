@@ -3,10 +3,8 @@ vim.cmd("set tabstop=4")
 vim.cmd("set softtabstop=4")
 vim.cmd("set shiftwidth=4")
 vim.g.mapleader = " "
--- Buffer navigation
 vim.keymap.set("n", "gt", "<cmd>bnext<cr>", { desc = "Next buffer" })
 vim.keymap.set("n", "gT", "<cmd>bprevious<cr>", { desc = "Previous buffer" })
--- Optional extras
 vim.keymap.set("n", "<S-l>", "<cmd>bnext<cr>", { desc = "Next buffer" })
 vim.keymap.set("n", "<S-h>", "<cmd>bprevious<cr>", { desc = "Previous buffer" })
 vim.keymap.set("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Close buffer" })

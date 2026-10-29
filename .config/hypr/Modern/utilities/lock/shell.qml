@@ -33,9 +33,7 @@ ShellRoot {
         }
     }
 
-    // handoff layers sit under the lock so unlocking doesn't just cut to the desktop.
-    // hidden on unlock and hyprland fades them out (lock-handoff rule in style.lua).
-    // made after the lock is up, making them at the same time added like 60ms
+    // screen copies under the lock so unlocking fades instead of cutting. making them with the lock added like 60ms
     Variants {
         model: !Lock.preview && (Lock.t === 1 || Lock.leaving) ? Quickshell.screens : []
         PanelWindow {

@@ -86,6 +86,20 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
   `j`/`k` to scroll, `d` to uninstall, `r` to reinstall, `q` to quit.
 </details>
 
+### Updating & Uninstalling
+
+Update:
+
+```
+git -C ~/Dotfiles pull && ~/Dotfiles/InstallScripts/apply.sh
+```
+
+Uninstall:
+
+```
+~/Dotfiles/InstallScripts/uninstall.sh
+```
+
 ## Styles, Variants & Profiles
 
 <details>

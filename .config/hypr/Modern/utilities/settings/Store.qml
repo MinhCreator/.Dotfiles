@@ -141,8 +141,7 @@ Singleton {
         onExited: { root.lastSnapshot = ""; root.refresh() }
     }
 
-    // a profile or wallpaper change elsewhere makes the pywal colors (and everything else) stale,
-    // so reload when any of these move. wal writes a bunch of files at once hence the wait
+    // profile or wallpaper changed somewhere else. wal writes a bunch of files at once hence the wait
     Watched { path: Quickshell.env("HOME") + "/.config/hypr/.active-profile"; onLoaded: staleTimer.restart() }
     Watched { path: Quickshell.env("HOME") + "/.cache/wallpaper-picker/current"; onLoaded: staleTimer.restart() }
     Watched { path: Quickshell.env("HOME") + "/.cache/wal/colors.json"; onLoaded: staleTimer.restart() }

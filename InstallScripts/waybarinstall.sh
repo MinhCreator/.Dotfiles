@@ -14,8 +14,6 @@ PACKAGES=(
 # AUR only, optional
 AUR_PACKAGES=(python-pywal16)
 
-# style
-
 select_style() {
     section "Waybar Style"
 
@@ -32,8 +30,6 @@ select_style() {
     STYLE_DIR="${styles[PICK]}"
     success "Selected $(basename "$STYLE_DIR")"
 }
-
-# config
 
 install_config() {
     section "Installing Waybar Config"

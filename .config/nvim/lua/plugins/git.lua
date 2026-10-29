@@ -43,7 +43,6 @@ return {
             status_formatter = nil,
             max_file_length = 40000,
             preview_config = {
-                -- nvim_open_win options
                 border = 'single',
                 style = 'minimal',
                 relative = 'cursor',

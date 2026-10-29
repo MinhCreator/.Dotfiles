@@ -55,6 +55,38 @@ install_packages() {
     fi
 }
 
+# cast_firewall allow|delete. tvs connect back to cast.py and ufw ate it, why my desktop couldn't cast but my laptop could
+CAST_PORTS=7236:7240
+CAST_LANS=(10.0.0.0/8 172.16.0.0/12 192.168.0.0/16)
+cast_firewall() {
+    local net proto
+    if [[ $1 == allow ]]; then
+        command -v ufw >/dev/null || firewall-cmd --state >/dev/null 2>&1 || return 0
+        # already open, so dotpull doesn't ask every time
+        grep -q "dports $CAST_PORTS" /etc/ufw/user.rules 2>/dev/null ||
+            firewall-cmd --list-ports 2>/dev/null | grep -q "${CAST_PORTS/:/-}/tcp" && return 0
+        ask "Open ports ${CAST_PORTS/:/-} to your home network so casting to TVs works?" || return 0
+    fi
+    if command -v ufw >/dev/null; then
+        for net in "${CAST_LANS[@]}"; do
+            for proto in tcp udp; do
+                if [[ $1 == allow ]]; then
+                    sudo ufw allow from "$net" to any port "$CAST_PORTS" proto "$proto" comment dotfiles-cast >/dev/null
+                else
+                    sudo ufw delete allow from "$net" to any port "$CAST_PORTS" proto "$proto" >/dev/null 2>&1
+                fi
+            done
+        done
+    fi
+    if command -v firewall-cmd >/dev/null && firewall-cmd --state >/dev/null 2>&1; then
+        for proto in tcp udp; do
+            sudo firewall-cmd -q --permanent --"$([[ $1 == allow ]] && echo add || echo remove)"-port="${CAST_PORTS/:/-}/$proto"
+        done
+        sudo firewall-cmd -q --reload
+    fi
+    return 0
+}
+
 # wal palette from the dotfiles wallpaper if there isn't one, fails if it still isn't there after
 ensure_wal() {
     [[ -f "$1" ]] && { success "Using your existing pywal palette."; return 0; }

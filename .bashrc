@@ -74,7 +74,8 @@ alias hypr='cd ~/.config/hypr && nvim'
 alias bashrc='n .bashrc'
 alias bye='sudo shutdown -h now'
 alias loop='sudo reboot'
-dotpull() { git -C ~/Dotfiles pull && hyprplugins; }
+# pull then relink. apply.sh does the plugins and cast ports too
+dotpull() { git -C ~/Dotfiles pull && ~/Dotfiles/InstallScripts/apply.sh; }
 dotpush() {
     local dir=~/Dotfiles msg
     [[ -z "$(git -C "$dir" status --porcelain)" ]] && {
@@ -93,7 +94,6 @@ dotpush() {
 alias InstallDots='~/Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
 alias Dotfiles='cd ~/Dotfiles/ && nvim'
-alias UpdateLocal='~/Dotfiles/InstallScripts/apply.sh'
 alias Savepro='~/.config/hypr/utilities/save-profile.sh'
 alias Nvim='cd ~/.config/nvim/ && nvim'
 function y() {

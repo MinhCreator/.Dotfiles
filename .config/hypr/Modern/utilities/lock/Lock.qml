@@ -7,7 +7,6 @@ import Quickshell.Hyprland
 import Quickshell.Services.Pam
 import "../common"
 
-// shared lock state, palette and motion come from Theme
 Singleton {
     id: root
 

@@ -103,6 +103,7 @@ undo_autologin() {
 undo_services() {
     picked avahi && sudo systemctl disable --now avahi-daemon.service avahi-daemon.socket >/dev/null 2>&1
     picked bluez && sudo systemctl disable --now bluetooth.service >/dev/null 2>&1
+    cast_firewall delete
     picked pipewire && systemctl --user disable pipewire.service pipewire-pulse.service >/dev/null 2>&1
     true
 }
@@ -199,7 +200,7 @@ EOF
     section "About to"
     echo "  • $( [[ $MODE == restore ]] && echo "unlink the dotfiles and restore your backups" || echo "unlink the dotfiles and leave everything default" )"
     echo "  • clear out everything the dotfiles generated (wallpaper-picker, wal colors, cava config...)"
-    echo "  • turn off autologin and hyprglass if they're set up"
+    echo "  • turn off autologin and hyprglass if they're set up, close the cast firewall ports"
     echo "  • uninstall ${#PICKED[@]} package(s)${PICKED:+: ${PICKED[*]}}"
     echo "  • move anything that isn't a link to $LEFT"
     ask "Go?" n || { info "Cancelled, nothing touched."; exit 0; }

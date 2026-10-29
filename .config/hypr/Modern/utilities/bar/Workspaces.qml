@@ -166,8 +166,7 @@ Item {
         Theme.dispatch("hl.dsp.focus({ workspace = " + id + " })", "workspace " + id)
     }
 
-    // saved workspaces live in the repo so they show up in git: launch command, plus geometry when floating
-    // sorted a-z. key is the window commands, it survives a rename so the row keeps its delegate and slides instead of popping in
+    // saved in the repo so git syncs them. keyed by the commands so a rename slides instead of popping in
     function keyOf(windows) { return windows.map(w => w.cmd).sort().join("\n") }
     readonly property var saved: {
         try {

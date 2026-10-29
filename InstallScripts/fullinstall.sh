@@ -10,8 +10,6 @@ DOTFILES_DIR="$HOME/Dotfiles"
 HYPRLAND_STYLE_DIR=""
 INSTALLING=false
 
-# backups
-
 # folders get copied into <name>_backup_<time>, .bashrc lands inside its own one
 backup_config() {
     local stamp="$(date +%Y%m%d_%H%M%S)" name src dest
@@ -26,8 +24,6 @@ backup_config() {
     success "Backups done."
 }
 
-# hyprland profile
-
 select_hyprland_style() {
     section "Hyprland Style"
 
@@ -39,8 +35,6 @@ select_hyprland_style() {
     HYPRLAND_STYLE_DIR="${profiles[PICK]}"
     success "Selected ${HYPRLAND_STYLE_DIR/\// / }"
 }
-
-# apply dotfiles
 
 link_entry() {
     local target="$1" link="$2" backup="$3"
@@ -116,8 +110,6 @@ pull_wallpapers() {
     ask "Pull the full wallpaper library?" || return 0
     "$HOME/.config/hypr/utilities/wallpapers.sh" install || warn "Couldn't pull wallpapers, sticking with the defaults."
 }
-
-# system setup
 
 setup_mirrors() {
     section "Updating Pacman Mirrorlist"
@@ -202,8 +194,6 @@ setup_pipewire() {
     success "PipeWire configured."
 }
 
-# installation modes
-
 run_install() {
     local manual="$1" pkg
     section "$($manual && echo Manual || echo Automatic) Installation"
@@ -227,6 +217,7 @@ run_install() {
 
     apply_dotfiles
     pull_wallpapers
+    cast_firewall allow
     ask "Set up autologin?" && { install_or_remove Autologin autologin_install autologin_uninstall || warn "Autologin setup failed."; }
     install_or_remove hyprglass glass_install glass_uninstall
     ask "Install optional packages?" && { yay -S --needed "${OPTIONAL_PACKAGES[@]}" || warn "Some optional packages failed."; }
@@ -241,8 +232,6 @@ run_install() {
         sudo systemctl reboot || sudo reboot || { error "Reboot failed; reboot manually."; return 1; }
     fi
 }
-
-# entry point
 
 main() {
     echo -e "${CYAN}${BOLD}"

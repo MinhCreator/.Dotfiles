@@ -1,7 +1,13 @@
 {
   "Modern/desktop": {
     "bar": {
-      "kind": "waybar"
+      "kind": "quickshell"
+    },
+    "colors": {
+      "theme": "pywal"
+    },
+    "quickshell": {
+      "style": "experimental"
     },
     "wallpaper": {
       "path": "/home/$USER/wallpapers/library/sunset/sun-17.jpg"

@@ -21,8 +21,6 @@ Item {
     // preview has no handoff, so fade itself
     opacity: Lock.preview ? Lock.fade : 1
 
-    // Backdrop
-
     Rectangle { anchors.fill: parent; color: "black" }
 
     Item {
@@ -56,8 +54,6 @@ Item {
         source: Lock.wallpaper
         opacity: Math.max(0.001, shot.status === Image.Ready ? Math.min(1, (Lock.t - 0.2) * 1.8) : 1)
     }
-
-    // Input
 
     MouseArea {
         anchors.fill: parent
@@ -96,8 +92,6 @@ Item {
 
     SystemClock { id: clock; precision: SystemClock.Seconds }
 
-    // Top left
-
     Reveal {
         x: face.margin
         y: face.margin
@@ -111,8 +105,6 @@ Item {
             color: "#ffffff"
         }
     }
-
-    // Center
 
     Column {
         anchors.horizontalCenter: parent.horizontalCenter
@@ -269,8 +261,6 @@ Item {
         }
     }
 
-    // Music
-
     Reveal {
         x: face.portrait ? (face.width - width) / 2 : face.width - width - face.margin
         y: face.height - height - face.margin
@@ -409,8 +399,6 @@ Item {
         }
     }
 
-    // Top right
-
     Reveal {
         x: face.width - width - face.margin
         y: face.margin
@@ -461,8 +449,6 @@ Item {
             }
         }
     }
-
-    // Settings
 
     Reveal {
         id: gearReveal

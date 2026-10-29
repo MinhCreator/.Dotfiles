@@ -1,5 +1,5 @@
 #!/bin/bash
-# symlinks the repo into $HOME and rebuilds plugins
+# symlinks the repo into $HOME, rebuilds plugins and opens the cast ports
 
 set -euo pipefail
 
@@ -11,3 +11,4 @@ source "$SCRIPT_DIR/fullinstall.sh"
 select_hyprland_style
 apply_dotfiles
 update_plugins
+cast_firewall allow

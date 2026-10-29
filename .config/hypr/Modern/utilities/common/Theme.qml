@@ -6,7 +6,6 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 
-// shared palette, animation timing and helpers
 Singleton {
     id: root
 
@@ -256,8 +255,8 @@ Singleton {
     function against(fill) { return contrast(fill, darkest) >= contrast(fill, lightest) ? darkest : lightest }
     function readable(c) { c = Qt.color(c); return contrast(c, bg) >= 3 ? c : against(bg) }
 
-    // solid accent looked like a sticker on glass, this sinks it into the panel a bit
-    function soft(c, hot) { return alpha(along([Qt.color(c), bg], hot ? 0.06 : 0.16), hot ? 0.94 : 0.84) }
+    // used to mix bg in for glass but pills came out muddier than the sliders. same color everywhere now
+    function soft(c, hot) { return hot ? Qt.lighter(c, 1.12) : Qt.color(c) }
     function on(fill) { return against(soft(fill)) }
     readonly property color ink: on(accent)
     readonly property var spectrum: [blue, cyan, green, yellow, magenta]

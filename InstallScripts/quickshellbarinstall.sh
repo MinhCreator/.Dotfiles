@@ -75,6 +75,7 @@ enable_services() {
         ask "Enable the $unit service (used by the bar)?" || continue
         sudo systemctl enable --now "$unit" || warn "Could not enable $unit; run 'sudo systemctl enable --now $unit'."
     done
+    cast_firewall allow
     systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service >/dev/null 2>&1 ||
         warn "Could not start PipeWire for this user; the audio page needs it."
     return 0
