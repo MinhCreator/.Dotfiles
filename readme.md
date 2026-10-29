@@ -78,6 +78,8 @@ Update:
 git -C ~/Dotfiles pull && ~/Dotfiles/InstallScripts/apply.sh
 ```
 
+Or if you have the bash alias `dotpull` that works too
+
 Uninstall:
 
 <details>
