@@ -20,6 +20,7 @@ A variant file with the same name as a base file replaces it.
 `hyprland.lua` loads `machine`, `startup`, `style`, `shortcuts`, `hyprglass` and then `overrides.lua` last. `overrides.lua` applies `settings.lua` (only the keys you changed) on top of the profile:
 
 - plugin keys go to hyprglass, not `hl.config`, and get retried at startup if the plugin isn't loaded yet
+- hyprglass is only loaded while glass is on for windows, layers or quickshell; `hypr-settings.py glass` loads or unloads it (startup and every settings change call it)
 - layer glass has two switches, quickshell layers and everything else, turned into hyprglass `namespaces` / `exclude_namespaces`
 - glass look values extend the preset from `hyprglass.lua` and get copied into `dark`/`light` too, otherwise those win
 - animations use one curve for every leaf, base speeds divided by the speed multiplier

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # casts my screen to tvs. chromecast/google tv over mdns, dlna tvs over ssdp
-# usage: cast.py scan | start cast|dlna <target> <name> region|window|screen | stop
+# usage: cast.py scan | start cast|dlna|miracast <target> <name> region|window|screen | stop
 # just needs wf-recorder and ffmpeg, didn't want pip stuff
 
 import json, os, re, shutil, signal, socket, ssl, struct, subprocess, sys, tempfile, threading, time
@@ -41,6 +41,19 @@ def chromecasts():
     return list(found.values())
 
 
+# rokus and some tvs do miracast over plain wifi (ms-mice), that's the -RT1 one network displays found.
+# no wifi direct and no xdph, the tv calls me back over rtsp and wf-recorder feeds it
+def miracasts():
+    found = {}
+    for line in sh(["avahi-browse", "-rtp", "_display._tcp"]).splitlines():
+        f = line.split(";", 9)
+        if len(f) < 10 or f[0] != "=" or f[2] != "IPv4":
+            continue
+        name = re.sub(r"\\(\d{3})", lambda m: chr(int(m.group(1))), f[3])
+        found[f[7]] = {"kind": "miracast", "target": f"{f[7]}:{f[8]}", "name": re.sub(r"-[A-Z0-9]{3}$", "", name)}
+    return list(found.values())
+
+
 def describe(loc):
     root = ET.fromstring(urllib.request.urlopen(loc, timeout=2).read())
     for e in root.iter():
@@ -57,11 +70,12 @@ def renderers():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
     s.settimeout(0.4)
-    msg = ("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\n"
-           "ST: urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n").encode()
+    msgs = [("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\n"
+             f"ST: {st}\r\n\r\n").encode() for st in ("urn:schemas-upnp-org:device:MediaRenderer:1",
+                                                      "urn:schemas-upnp-org:service:AVTransport:1", "ssdp:all")]
     locs, end = set(), time.time() + 3
     try:
-        for _ in range(2):
+        for msg in msgs * 2:
             s.sendto(msg, ("239.255.255.250", 1900))
         while time.time() < end:
             try:
@@ -85,7 +99,8 @@ def renderers():
 
 def scan():
     res = {}
-    jobs = [threading.Thread(target=lambda k=k, f=f: res.__setitem__(k, f())) for k, f in (("cast", chromecasts), ("dlna", renderers))]
+    jobs = [threading.Thread(target=lambda k=k, f=f: res.__setitem__(k, f()))
+            for k, f in (("cast", chromecasts), ("dlna", renderers), ("miracast", miracasts))]
     for j in jobs:
         j.start()
     for j in jobs:
@@ -94,6 +109,8 @@ def scan():
     # android tvs show up twice, the cast one works better
     names = {c["name"] for c in cast}
     tvs = cast + [d for d in res.get("dlna", []) if d["name"] not in names]
+    names |= {d["name"] for d in tvs}
+    tvs += [m for m in res.get("miracast", []) if m["name"] not in names]
     print(json.dumps(sorted(tvs, key=lambda t: t["name"].lower())))
 
 
@@ -113,11 +130,11 @@ def area(mode):
 
 
 # h264 yuv420p mpegts, only thing every tv i tried would play
-def capture(args):
-    cmd = ["wf-recorder", "-y", *args, "-c", "libx264", "-x", "yuv420p", "-r", "30", "-F", "scale=-2:1080",
-           "-p", "preset=ultrafast", "-p", "tune=zerolatency", "-p", "g=15", "-m", "mpegts", "-f", "pipe:1"]
+def capture(args, vf="scale=-2:1080", audio=True, extra=()):
+    cmd = ["wf-recorder", "-y", *args, "-c", "libx264", "-x", "yuv420p", "-r", "30", "-F", vf,
+           "-p", "preset=ultrafast", "-p", "tune=zerolatency", "-p", "g=15", *extra, "-m", "mpegts", "-f", "pipe:1"]
     sink = sh(["pactl", "get-default-sink"]).strip()
-    if sink:
+    if sink and audio:
         cmd[2:2] = [f"--audio={sink}.monitor", "-C", "aac"]
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
@@ -299,6 +316,152 @@ def watch_chromecast(cc, live):
                 return
 
 
+# ms-mice: tell the tv i'm ready on tcp 7250, it opens rtsp back to me and the wfd handshake runs from there
+
+def mice(cmd, name, sid, port=0):
+    tlv = lambda t, v: struct.pack(">BH", t, len(v)) + v
+    body = tlv(0, (name + "\0").encode("utf-16-le")) + (tlv(2, struct.pack(">H", port)) if port else b"") + tlv(3, sid)
+    return struct.pack(">HBB", len(body) + 4, 1, cmd) + body
+
+
+# cea modes the tv can pick from, bit in wfd_video_formats -> size
+CEA = {7: (1920, 1080), 5: (1280, 720), 0: (640, 480)}
+
+
+class Miracast:
+    def __init__(self, target, args, procs):
+        self.args, self.procs = args, procs
+        self.sid, self.name, self.seq, self.buf = os.urandom(16), socket.gethostname(), 0, b""
+        self.c = self.ctl = None
+        try:
+            self.ls = socket.create_server(("0.0.0.0", 7236))
+        except OSError:
+            self.ls = socket.create_server(("0.0.0.0", 0))
+        host, port = target.rsplit(":", 1)
+        self.ctl = socket.create_connection((host, int(port)), timeout=10)
+        self.ctl.sendall(mice(1, self.name, self.sid, self.ls.getsockname()[1]))
+        self.ls.settimeout(30)
+        try:
+            self.c = self.ls.accept()[0]
+        except socket.timeout:
+            raise TimeoutError("tv never called back") from None
+        self.c.settimeout(20)
+        self.host, self.me = self.c.getpeername()[0], self.c.getsockname()[0]
+
+    def more(self):
+        b = self.c.recv(65536)
+        if not b:
+            raise ConnectionError("tv hung up")
+        self.buf += b
+
+    def read(self):
+        while b"\r\n\r\n" not in self.buf:
+            self.more()
+        head, self.buf = self.buf.split(b"\r\n\r\n", 1)
+        lines = head.decode(errors="replace").split("\r\n")
+        h = {k.strip().lower(): v.strip() for k, _, v in (l.partition(":") for l in lines[1:])}
+        n = int(h.get("content-length", 0))
+        while len(self.buf) < n:
+            self.more()
+        body, self.buf = self.buf[:n].decode(errors="replace"), self.buf[n:]
+        return lines[0].split(" ", 2), h, body
+
+    def ask(self, method, url="rtsp://localhost/wfd1.0", body="", extra=""):
+        self.seq += 1
+        msg = f"{method} {url} RTSP/1.0\r\nCSeq: {self.seq}\r\n{extra}"
+        if body:
+            msg += f"Content-Type: text/parameters\r\nContent-Length: {len(body)}\r\n"
+        self.c.sendall((msg + "\r\n" + body).encode())
+        return self.seq
+
+    def ok(self, h, extra=""):
+        self.c.sendall(f"RTSP/1.0 200 OK\r\nCSeq: {h.get('cseq', '0')}\r\n{extra}\r\n".encode())
+
+    # picks the biggest mode the tv takes, keeps my aspect and pads the rest
+    def formats(self, caps):
+        f = caps.get("wfd_video_formats", "").split(", ")[0].split()
+        prof, level, cea = int(f[2], 16), f[3], int(f[4], 16)
+        bit = next((b for b in CEA if cea >> b & 1), 0)
+        self.size = CEA[bit]
+        self.audio = "AAC" in caps.get("wfd_audio_codecs", "")
+        self.port = int(re.search(r"unicast (\d+)", caps.get("wfd_client_rtp_ports", "")).group(1))
+        lines = [f"wfd_video_formats: {bit << 3:02x} 00 {(prof & -prof):02x} {level} {1 << bit:08x} 00000000 00000000 00 0000 0000 00 none none",
+                 f"wfd_presentation_URL: rtsp://{self.me}/wfd1.0/streamid=0 none",
+                 f"wfd_client_rtp_ports: RTP/AVP/UDP;unicast {self.port} 0 mode=play"]
+        if self.audio:
+            lines.insert(1, "wfd_audio_codecs: AAC 00000001 00")
+        return "\r\n".join(lines) + "\r\n"
+
+    # wfd wants rtp mpegts, 7 ts packets a datagram, video on pid 0x1011 and audio on 0x1100
+    def stream(self):
+        w, h = self.size
+        rec = capture(self.args, f"scale={w}:{h}:force_original_aspect_ratio=decrease:force_divisible_by=2,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2",
+                      self.audio, ["-p", "crf=23", "-p", "maxrate=8000000", "-p", "bufsize=2000000"])
+        mux = subprocess.Popen(["ffmpeg", "-loglevel", "error", "-fflags", "nobuffer", "-probesize", "32768", "-analyzeduration", "0", "-i", "pipe:0", "-map", "0", "-c", "copy", "-streamid", "0:0x1011",
+                                "-streamid", "1:0x1100", "-mpegts_pmt_start_pid", "0x100", "-muxdelay", "0", "-flush_packets", "1",
+                                "-f", "mpegts", "pipe:1"], stdin=rec.stdout, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        rec.stdout.close()
+        self.procs += [rec, mux]
+        def send():
+            s, seq, ssrc, t0 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM), 0, struct.unpack(">I", os.urandom(4))[0], time.monotonic()
+            while len(chunk := mux.stdout.read(1316)) == 1316:
+                ts = int((time.monotonic() - t0) * 90000) & 0xFFFFFFFF
+                try:
+                    s.sendto(struct.pack(">BBHII", 0x80, 33, seq, ts, ssrc) + chunk, (self.host, self.port))
+                except OSError:
+                    pass
+                seq = (seq + 1) & 0xFFFF
+        threading.Thread(target=send, daemon=True).start()
+        return mux
+
+    def run(self, live):
+        mux, want = None, {self.ask("OPTIONS", "*", extra="Require: org.wfa.wfd1.0\r\n"): "m1"}
+        while True:
+            try:
+                first, h, body = self.read()
+            except socket.timeout:
+                if mux and mux.poll() is not None:
+                    raise RuntimeError("screen capture stopped")
+                self.ask("GET_PARAMETER")  # keepalive
+                continue
+            if first[0].startswith("RTSP/"):
+                if first[1] != "200":
+                    raise RuntimeError("tv said " + " ".join(first[1:]))
+                step = want.pop(int(h.get("cseq", 0)), "")
+                if step == "m3":
+                    caps = dict(l.split(":", 1) for l in body.splitlines() if ":" in l)
+                    want[self.ask("SET_PARAMETER", body=self.formats({k.strip(): v.strip() for k, v in caps.items()}))] = "m4"
+                elif step == "m4":
+                    self.ask("SET_PARAMETER", body="wfd_trigger_method: SETUP\r\n")
+                continue
+            method = first[0]
+            if method == "OPTIONS":
+                self.ok(h, "Public: org.wfa.wfd1.0, SETUP, TEARDOWN, PLAY, PAUSE, GET_PARAMETER, SET_PARAMETER\r\n")
+                want[self.ask("GET_PARAMETER", body="wfd_video_formats\r\nwfd_audio_codecs\r\nwfd_client_rtp_ports\r\n")] = "m3"
+            elif method == "SETUP":
+                self.ok(h, f"Session: 6B8B4567;timeout=30\r\nTransport: RTP/AVP/UDP;unicast;client_port={self.port};server_port=19000\r\n")
+            elif method == "PLAY":
+                self.ok(h, "Session: 6B8B4567\r\nRange: npt=now-\r\n")
+                mux = mux or self.stream()
+                live()
+            elif method == "TEARDOWN":
+                self.ok(h, "Session: 6B8B4567\r\n")
+                return
+            else:
+                self.ok(h)  # keepalives, idr requests, whatever else
+
+    def close(self):
+        for f in (lambda: self.ask("SET_PARAMETER", body="wfd_trigger_method: TEARDOWN\r\n"),
+                  lambda: self.ctl.sendall(mice(2, self.name, self.sid))):
+            try:
+                f()
+            except Exception:
+                pass
+        for sk in (self.c, self.ctl, self.ls):
+            if sk:
+                sk.close()
+
+
 def soap(url, action, args=""):
     body = ('<?xml version="1.0" encoding="utf-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" '
             's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body>'
@@ -322,6 +485,38 @@ def dlna(target, url):
     soap(target, "Play", "<Speed>1</Speed>")
 
 
+def unspeak():
+    for line in sh(["pactl", "list", "short", "modules"]).splitlines():
+        if "sink_name=cast " in line + " ":
+            sh(["pactl", "unload-module", line.split()[0]])
+
+
+# speaker named after the tv, everything plays there instead of my laptop and my volume keys turn the tv
+class Speaker:
+    def __init__(self, name):
+        unspeak()  # a cast that died could've left its speaker as my default
+        self.old = sh(["pactl", "get-default-sink"]).strip()
+        if self.old == "cast":
+            self.old = ""
+        desc = name.replace('"', "")
+        self.mod = sh(["pactl", "load-module", "module-null-sink", "sink_name=cast", f'device.description="{desc}"']).strip()
+        vol = re.search(r"(\d+)%", sh(["pactl", "get-sink-volume", self.old]))
+        if vol:
+            sh(["pactl", "set-sink-volume", "cast", vol.group(1) + "%"])
+        self.move("cast")
+
+    def move(self, sink):
+        sh(["pactl", "set-default-sink", sink])
+        for line in sh(["pactl", "list", "short", "sink-inputs"]).splitlines():
+            sh(["pactl", "move-sink-input", line.split()[0], sink])
+
+    def close(self):
+        if self.old:
+            self.move(self.old)
+        if self.mod:
+            sh(["pactl", "unload-module", self.mod])
+
+
 def local_ip(host):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -334,10 +529,27 @@ def local_ip(host):
 def stop():
     try:
         pid = json.load(open(STATE)).get("pid", 0)
-        if pid and pid != os.getpid():
-            os.kill(pid, signal.SIGTERM)
     except (OSError, ValueError):
-        pass
+        return
+    try:
+        if pid == os.getpid():
+            return
+        # pid could be dead or reused by now, only kill it if it's still me
+        if "cast.py" not in open(f"/proc/{pid}/cmdline").read():
+            raise ProcessLookupError
+        os.kill(pid, signal.SIGTERM)
+        # let it put my speakers back before a new cast grabs them
+        for _ in range(100):
+            if not os.path.exists(f"/proc/{pid}"):
+                break
+            time.sleep(0.1)
+    except OSError:
+        # died without cleaning up, bar would say casting forever
+        for d in os.listdir(RUN):
+            if d.startswith("cast-") and d != "cast-state" and not d.startswith("cast-state."):
+                shutil.rmtree(os.path.join(RUN, d), ignore_errors=True)
+        unspeak()
+        state(None)
 
 
 def start(kind, target, name, mode):
@@ -350,6 +562,7 @@ def start(kind, target, name, mode):
     stop()
     signal.signal(signal.SIGTERM, lambda *a: sys.exit(0))
     signal.signal(signal.SIGINT, lambda *a: sys.exit(0))
+    signal.signal(signal.SIGHUP, lambda *a: sys.exit(0))
     began = int(time.time())
     state({"pid": os.getpid(), "name": name, "started": 0})
     shown = []
@@ -362,10 +575,14 @@ def start(kind, target, name, mode):
     srv = Server(d, args)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     host = target.rsplit(":", 1)[0] if kind == "cast" else urllib.parse.urlparse(target).hostname
-    base = f"http://{local_ip(host)}:{srv.server_address[1]}"
-    cc = session = None
+    base = f"http://{local_ip(host)}:{srv.server_address[1]}" if kind in ("cast", "dlna") else ""
+    cc = session = mc = spk = None
     try:
-        if kind == "cast":
+        spk = Speaker(name)
+        if kind == "miracast":
+            mc = Miracast(target, args, srv.procs)
+            mc.run(live)
+        elif kind == "cast":
             # chromecast only takes live video as hls
             rec = capture(args)
             seg = subprocess.Popen(["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-c", "copy", "-f", "hls", "-hls_time", "0.5",
@@ -401,10 +618,14 @@ def start(kind, target, name, mode):
                 cc.send(RECV, {"type": "STOP", "sessionId": session, "requestId": 3})
             elif kind == "dlna":
                 soap(target, "Stop")
+            elif mc:
+                mc.close()
         except Exception:
             pass
         for p in srv.procs:
             p.kill()
+        if spk:
+            spk.close()
         srv.shutdown()
         shutil.rmtree(d, ignore_errors=True)
         state(None)
@@ -419,4 +640,4 @@ if __name__ == "__main__":
     elif a[:1] == ["stop"]:
         stop()
     else:
-        sys.exit("usage: cast.py scan | start cast|dlna <target> <name> region|window|screen | stop")
+        sys.exit("usage: cast.py scan | start cast|dlna|miracast <target> <name> region|window|screen | stop")

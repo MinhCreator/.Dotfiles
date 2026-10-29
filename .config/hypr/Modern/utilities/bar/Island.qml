@@ -96,7 +96,6 @@ Item {
                             Quickshell.shellDir + "/bar/cast.py", tv.kind, tv.target, tv.name, mode])
                     }
                     onStopCast: Quickshell.execDetached([Quickshell.shellDir + "/bar/cast.py", "stop"])
-                    onMore: { page.pill.close(); page.ctx.run("gnome-network-displays") }
                     onStop: page.ctx.run("'" + Quickshell.shellDir + "/bar/capture.sh' stop")
                 }
             }
@@ -709,7 +708,6 @@ Item {
         signal cancelShare()
         signal cast(var tv, string mode)
         signal stopCast()
-        signal more()
 
         property var tvs: []
         property var tv: null
@@ -832,8 +830,7 @@ Item {
                         width: parent.width
 
                         Repeater {
-                            // miracast needs wifi direct, not dealing with that. gnome-network-displays can
-                            model: page.tvs.concat([{ kind: "more", name: "Miracast" }])
+                            model: page.tvs
 
                             Rectangle {
                                 id: tvRow
@@ -852,13 +849,13 @@ Item {
                                     text: (tvRow.modelData.kind === "cast" ? "󰄘" : tvRow.modelData.kind === "dlna" ? "󰔂" : "󰖩") + "   " + tvRow.modelData.name
                                     elide: Text.ElideRight
                                     font.pixelSize: 12
-                                    color: tvArea.containsMouse ? Theme.bright : tvRow.modelData.kind === "more" ? Theme.dim : Theme.fg
+                                    color: tvArea.containsMouse ? Theme.bright : Theme.fg
                                 }
 
                                 Hover {
                                     id: tvArea
                                     anchors.fill: parent
-                                    onClicked: tvRow.modelData.kind === "more" ? page.more() : page.tv = tvRow.modelData
+                                    onClicked: page.tv = tvRow.modelData
                                 }
                             }
                         }

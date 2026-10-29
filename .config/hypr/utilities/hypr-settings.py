@@ -145,6 +145,7 @@ def prune(tree):
 
 
 def reapply(reload=False):
+    reload = cmd_glass(reload=False) or reload
     run("hyprctl", "eval", 'package.loaded.settings=nil package.loaded.overrides=nil require("overrides")')
     if reload:
         run("hyprctl", "reload", "config-only")
@@ -276,7 +277,35 @@ def has_touchpad():
 
 
 def has_hyprglass():
+    return "hyprglass" in run("hyprpm", "list").lower()
+
+
+def hyprglass_loaded():
     return "hyprglass" in run("hyprctl", "plugin", "list").lower()
+
+
+# same switches overrides.lua reads
+def glass_wanted(settings):
+    if dig(settings, "config.plugin.hyprglass.enabled"):
+        return True
+    targets = settings.get("hyprglass") or {}
+    if "layers" in targets or "quickshell" in targets:
+        return targets.get("layers") is not False or targets.get("quickshell") is not False
+    return bool(dig(settings, "config.plugin.hyprglass.layers.enabled"))
+
+
+# glass off everywhere means the plugin isn't loaded at all, it still hooks every frame otherwise
+def cmd_glass(reload=True):
+    wanted, loaded = glass_wanted(live_settings()), hyprglass_loaded()
+    if wanted and not loaded and has_hyprglass():
+        run("hyprpm", "reload", "-n")
+        if reload:
+            run("hyprctl", "reload", "config-only")
+        return True
+    if loaded and not wanted:
+        for so in Path("/var/cache/hyprpm").glob(f"{os.environ.get('USER', '*')}/*/hyprglass.so"):
+            run("hyprctl", "plugin", "unload", str(so))
+    return False
 
 
 def monitor_count():
@@ -589,7 +618,7 @@ def cmd_ui(pairs):
 def main():
     command, args = (sys.argv[1], sys.argv[2:]) if len(sys.argv) > 1 else ("", [])
     handlers = {"state": cmd_state, "set": cmd_set, "ui": cmd_ui, "saved": cmd_saved}
-    bare = {"reset": cmd_reset, "sync": cmd_sync, "cursor": cmd_cursor, "appearance": cmd_appearance}
+    bare = {"reset": cmd_reset, "sync": cmd_sync, "cursor": cmd_cursor, "appearance": cmd_appearance, "glass": cmd_glass}
     if command in bare:
         bare[command]()
     elif command in handlers:

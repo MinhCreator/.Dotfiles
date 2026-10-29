@@ -20,18 +20,19 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("sleep .5 && swww restore")
     hl.exec_cmd("awww-daemon")
-    hl.exec_cmd([[sh -c '
-        command -v hyprpm >/dev/null 2>&1 || exit 0
-        hyprpm list 2>/dev/null | grep -qi hyprglass || exit 0
-        hyprpm reload -n >/dev/null 2>&1
-        sleep 1
-        hyprctl plugin list 2>/dev/null | grep -qi hyprglass && hyprctl reload
-    ']])
+    -- only loads hyprglass when something has glass on
+    hl.exec_cmd("~/.config/hypr/utilities/hypr-settings.py glass")
 end)
 
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
-hl.env("LIBVA_DRIVER_NAME", "nvidia")
-hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+-- hybrid mode hands the screen to intel, forcing nvidia libs there just breaks stuff
+local probe = io.popen([[sh -c 'for s in /sys/class/drm/card*-*/status; do grep -q "^connected" "$s" && readlink -f "${s%/*}/device/device/driver"; done' 2>/dev/null]])
+local on_nvidia = probe and probe:read("*a"):find("nvidia") ~= nil
+if probe then probe:close() end
+if on_nvidia then
+    hl.env("LIBVA_DRIVER_NAME", "nvidia")
+    hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+end
 hl.env("XCURSOR_THEME", cursor.theme or defaults.cursor.theme)
 hl.env("XCURSOR_SIZE", tostring(cursor.size or defaults.cursor.size))
 hl.device({ name = "epic-mouse-v1", sensitivity = 0 })
