@@ -53,10 +53,9 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
   <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/images/v2/profiles.gif" width="70%">
 </p>
 
-# Install
+# Install Updating & Uninstalling
 
-<details>
-  <summary><picture><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/images/badges/arch-install-script-v2.svg" alt="Arch Install Script" align="absmiddle"></picture></summary>
+Install
 
   - With this script you should be able to install everything together, or just one of my bars on its own.
   - Dont worry it doesn't delete anything. It asks to back up your `~/.config` first and moves anything it replaces to `~/.dotfiles_replaced_<date>`.
@@ -72,7 +71,14 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
   - `2. Waybar` - just my waybar
   - `3. Quickshell bar` - just my quickshell bar
   - `p. Package manager TUI` - see below
-</details>
+
+Update:
+
+```
+git -C ~/Dotfiles pull && ~/Dotfiles/InstallScripts/apply.sh
+```
+
+Uninstall:
 
 <details>
   <summary><picture><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/images/badges/package-manager-tui-v2.svg" alt="Package Manager TUI" align="absmiddle"></picture></summary>
@@ -85,16 +91,6 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
 
   `j`/`k` to scroll, `d` to uninstall, `r` to reinstall, `q` to quit.
 </details>
-
-### Updating & Uninstalling
-
-Update:
-
-```
-git -C ~/Dotfiles pull && ~/Dotfiles/InstallScripts/apply.sh
-```
-
-Uninstall:
 
 ```
 ~/Dotfiles/InstallScripts/uninstall.sh
